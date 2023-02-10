@@ -1,10 +1,11 @@
 package main
 
 import (
+	// "DomainMonitor/pkg/util"
 	"fmt"
 )
 
 func main() {
 	fmt.Println("Hello World!")
-	// pkg.ReadMonitorDir()
+	// util.ReadRedisConfig("db")
 }

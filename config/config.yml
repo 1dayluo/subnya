@@ -1,4 +1,12 @@
 schedule:
-  cron: "* * * *"
+  - cron: "* * * *"
+
 monitor:
-  dir: [""/var/tmp""]
+
+  dir: 
+    - "/var/tmp"
+
+database:
+  addr: "localhost:6379"
+  password: "" 
+  db:   0 
