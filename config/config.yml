@@ -1,0 +1,4 @@
+schedule:
+  cron: "* * * *"
+monitor:
+  dir: [""/var/tmp""]
