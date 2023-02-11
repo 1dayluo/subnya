@@ -4,9 +4,9 @@ schedule:
 monitor:
 
   dir: 
-    - "/var/tmp"
+    - "./test"
 
 database:
-  addr: "localhost:6379"
+  addr: "172.17.0.1:6379"
   password: "" 
   db:   0 
