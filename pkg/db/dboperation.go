@@ -38,12 +38,12 @@ func SetMd5InDB(fileMd5 string) {
 	//Return Nil
 	err := rdb.SAdd(ctx, "fmd5", fileMd5, 0).Err()
 	if err != nil {
-		panic(err)
+		fmt.Println("\tError:", err)
 	}
 }
 
-func SetFileAndMd5(fileName string, fileMd5 string) {
-	//@title SetFileAndMd5
+func UpdateFileMd5(fileName string, fileMd5 string) {
+	//@title UpdateFileMd5
 	//@param
 	//Return Nil
 	rdb.HSet(ctx, "file_md5", fileName, fileMd5)
@@ -62,12 +62,22 @@ func SearchFileMd5(fileName string) string {
 	return md5
 }
 
+func DelMd5InDB(md5 string) {
+	//@title DelMd5InDB
+	//@param
+	//Return
+	_, err := rdb.SRem(ctx, "fmd5", md5).Result()
+	if err != nil {
+		fmt.Println("\tError:", err)
+	}
+}
+
 func CheckMd5InDB(fileMd5 string) bool {
 	//@title checkFileMd5
 	//@param
 	//Return Nil
 
-	exists, err := rdb.SIsMember(ctx, "fmd5test", fileMd5).Result()
+	exists, err := rdb.SIsMember(ctx, "fmd5", fileMd5).Result()
 	if err != nil {
 		return false
 	}
