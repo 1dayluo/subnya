@@ -1,17 +1,35 @@
 package main
 
 import (
-	"DomainMonitor/pkg"
 	"DomainMonitor/pkg/db"
+	"DomainMonitor/pkg/io"
 	"DomainMonitor/pkg/readconf"
 	"fmt"
+	"net/http"
 )
 
 func InsertNewFindMd5(fname string, fmd5 string) {
+	//@title InsertNewFindMd5:
+	//@param
+	//Return
 	db.SetMd5InDB(fmd5)
 	db.UpdateFileMd5(fname, fmd5)
 
 }
+
+func aliveCheck(url string) (bool, int) {
+	//@title aliveCheck
+	//@param
+	//Return bool
+	// timeout := time.Duration(2*time.Second)
+	resp, err := http.Get(url)
+	if err != nil {
+		return false, -1
+	} else {
+		return true, resp.StatusCode
+	}
+}
+
 func searchAndUpdateMd5() (newMonitorFiles []string) {
 	//@title searchAndUpdateMd5
 	//@param
@@ -19,7 +37,7 @@ func searchAndUpdateMd5() (newMonitorFiles []string) {
 	dirs := readconf.ReadMonitorDir()
 	var dirInfo []map[string]string
 	for _, dir := range dirs {
-		dirInfo = append(dirInfo, pkg.ReadFromDir(dir))
+		dirInfo = append(dirInfo, io.ReadFromDir(dir))
 	}
 	for _, finfos := range dirInfo {
 		for fname, fmd5 := range finfos {
