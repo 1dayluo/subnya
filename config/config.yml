@@ -6,7 +6,11 @@ monitor:
   dir: 
     - "./test"
 
-database:
+redis:
   addr: "172.17.0.1:6379"
   password: "" 
   db:   0 
+
+sqlite:
+  db_1: "added_sub"
+  
