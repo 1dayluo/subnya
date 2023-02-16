@@ -1,7 +1,8 @@
 package main
 
 import (
-	"DomainMonitor/pkg/db"
+	redis "DomainMonitor/pkg/db"
+	sqlite "DomainMonitor/pkg/db"
 	"DomainMonitor/pkg/io"
 	"DomainMonitor/pkg/readconf"
 	"fmt"
@@ -12,8 +13,8 @@ func InsertNewFindMd5(fname string, fmd5 string) {
 	//@title InsertNewFindMd5:
 	//@param
 	//Return
-	db.SetMd5InDB(fmd5)
-	db.UpdateFileMd5(fname, fmd5)
+	redis.SetMd5InDB(fmd5)
+	redis.UpdateFileMd5(fname, fmd5)
 
 }
 
@@ -41,16 +42,16 @@ func searchAndUpdateMd5() (newMonitorFiles []string) {
 	}
 	for _, finfos := range dirInfo {
 		for fname, fmd5 := range finfos {
-			if db.CheckMd5InDB(fmd5) {
+			if redis.CheckMd5InDB(fmd5) {
 				// fmt.Println("\t[Info]Exists:", fname)
-				history_md5 := db.SearchFileMd5(fname)
+				history_md5 := redis.SearchFileMd5(fname)
 				if history_md5 != fmd5 {
 					InsertNewFindMd5(fname, fmd5)
 					newMonitorFiles = append(newMonitorFiles, fname)
 				}
 			} else { //If fmd5 not in
 				// fmt.Println("\t[Info]Not Exists:", fname)
-				db.UpdateFileMd5(fname, fmd5)
+				redis.UpdateFileMd5(fname, fmd5)
 				InsertNewFindMd5(fname, fmd5)
 				newMonitorFiles = append(newMonitorFiles, fname)
 			}
@@ -60,8 +61,10 @@ func searchAndUpdateMd5() (newMonitorFiles []string) {
 }
 func main() {
 	fmt.Println("Hello World!")
-	db.InitClient()
-	files := searchAndUpdateMd5()
-	fmt.Printf("\t[Info]New find in files: %v", files)
+	redis.InitClient()
+	searchAndUpdateMd5()
+	// fmt.Printf("\t[Info]New find in files: %v", files)
+	sqlite.InitSqlClient()
+	sqlite.InsertAdded("test.xyz", "abc.test.xyz")
 
 }

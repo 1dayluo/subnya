@@ -12,5 +12,5 @@ redis:
   db:   0 
 
 sqlite:
-  db_1: "added_sub"
+  db_1: "./db/monitor.db"
   

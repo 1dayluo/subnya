@@ -1,10 +1,11 @@
-package pkg
+package io
 
 import (
 	"crypto/md5"
 	"fmt"
 	"io/ioutil"
 	"log"
+	"os"
 )
 
 func ReadFromDir(dirname string) map[string]string {
@@ -31,4 +32,23 @@ func ReadFromDir(dirname string) map[string]string {
 	}
 
 	return fileMap
+}
+
+func check(e error) {
+	//@title check
+	//@param
+	//Return
+	if e != nil {
+		panic(e)
+	}
+}
+func ReadFileContent(fname string) (data []byte) {
+	//@title ReadFileContent:
+	//@param
+	//Return
+	data, err := os.ReadFile(fname)
+	check(err)
+
+	return
+
 }
