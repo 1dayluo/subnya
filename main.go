@@ -65,10 +65,10 @@ func main() {
 	searchAndUpdateMd5()
 	// fmt.Printf("\t[Info]New find in files: %v", files)
 	sqlite.InitSqlClient()
-	sqlite.Test("abc.com", "xyz.abc.com")
+	// sqlite.Test("abc.com", "xyz.abc.com")
 	// sqlite.AddMonitor("abc.com", "xyz.abc.com")
 	// sqlite.AddMonitor("xyz.com", "xyz.xyz.com")
-	// sqlite.GetSubDomianInfo("xyz.xyz.com")
-	// sqlite.DeleteMonitor("xyz.abc.com", "abc.com")
+	sqlite.GetSubDomianInfo("xyz.xyz.com")
+	sqlite.DeleteMonitor("abc.com", "xyz.abc.com")
 
 }

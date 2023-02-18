@@ -65,106 +65,121 @@ func InitSqlClient() {
 	}
 }
 
-func BeginTx() (tx *sql.Tx) {
-	//@title BeginTx
-	//@param domain(string) subdomain(string) checked_time(int)
-	//Return
+func Test(domain string, subdomain string) {
+	current_time := time.Now().Format("2006-01-02 15:04:05")
 	tx, err := db_conn.Begin()
 	if err != nil {
 		panic(err)
 	}
-	defer tx.Rollback()
-	return
-}
-func checkErr(err error, stmt *sql.Stmt) {
-	if err != nil {
-		fmt.Println("error:", err)
-		panic(err)
-	}
-	defer stmt.Close()
-}
-
-func Test(domain string, subdomain string) {
-	current_time := time.Now().Format("2006-01-02 15:04:05")
-
-	tx := BeginTx()
+	defer func() {
+		if err != nil {
+			tx.Rollback()
+		}
+		err = tx.Commit()
+	}()
 	stmt, err := tx.Prepare("INSERT OR REPLACE INTO domains (DOMAIN, SUBDOMAIN, UPDATETIME, CHECKEDTIME, IFON) VALUES (?, ?, ?, COALESCE((SELECT CHECKEDTIME FROM domains WHERE SUBDOMAIN = ?), 0) + 1, 1)")
 	if err != nil {
 		fmt.Println("error:", err)
 		panic(err)
 	}
-	defer stmt.Close()
-	checkErr(err, stmt)
+	if err != nil {
+		fmt.Println("error:", err)
+		panic(err)
+	}
 	defer stmt.Close()
 
 	if _, err := stmt.Exec(domain, subdomain, current_time, subdomain); err != nil {
-		tx.Rollback()
-		panic(err)
+		return
 	}
-	if err := tx.Commit(); err != nil {
-		tx.Rollback()
-		panic(err)
-	}
+
 }
-func AddMonitor(domain string, subdomain string) {
+func AddMonitor(domain string, subdomain string) (err error) {
 	//@title AddMonitor
 	//@param domain(string) subdomain(string) checked_time(int)
 	//Return
 	current_time := time.Now().Format("2006-01-02 15:04:05")
-
-	tx := BeginTx()
+	tx, err := db_conn.Begin()
+	if err != nil {
+		panic(err)
+	}
+	defer func() {
+		if err != nil {
+			tx.Rollback()
+		}
+		err = tx.Commit()
+	}()
 	sql_operation := []string{
-		fmt.Sprintf("INSERT OR REPLACE INTO %s (DOMAIN, SUBDOMAIN, UPDATETIME, CHECKEDTIME, ON) VALUES (?, ?, ?, COALESCE((SELECT CHECKEDTIME FROM domains WHERE SUBDOMAIN = ?), 0) + 1, 1)", "domains"),
-		fmt.Sprintf("INSERT OR REPLACE INTO %s (DOMAIN, SUBDOMAIN, UPDATETIME, CHECKEDTIME) VALUES (?, ?, ?, COALESCE((SELECT CHECKEDTIME FROM domains WHERE SUBDOMAIN = ?), 0 )+ 1)", "added_domains"),
+		fmt.Sprintf("INSERT OR REPLACE INTO %s (DOMAIN, SUBDOMAIN, UPDATETIME, CHECKEDTIME, IFON) VALUES (?, ?, ?, COALESCE((SELECT CHECKEDTIME FROM domains WHERE SUBDOMAIN = ?), 0) + 1, 1)", "domains"),
+		fmt.Sprintf("INSERT OR REPLACE INTO %s (DOMAIN, SUBDOMAIN, UPDATETIME, CHECKEDTIME) VALUES (?, ?, ?, COALESCE((SELECT CHECKEDTIME FROM domains WHERE SUBDOMAIN = ?), 0 ))", "added_domains"),
 	}
 	stmt_1, err := tx.Prepare(sql_operation[0])
-	fmt.Println(sql_operation[0])
-	checkErr(err, stmt_1)
-	// defer stmt_1.Close()
+	if err != nil {
+		fmt.Println("error:", err)
+		panic(err)
+	}
+	defer stmt_1.Close()
+
 	if _, err := stmt_1.Exec(domain, subdomain, current_time, subdomain); err != nil {
 		panic(err)
+		// return
 	}
 
 	stmt_2, err := tx.Prepare(sql_operation[1])
-	checkErr(err, stmt_2)
+	if err != nil {
+		fmt.Println("error:", err)
+		panic(err)
+	}
 	defer stmt_2.Close()
+
 	if _, err := stmt_2.Exec(domain, subdomain, current_time, subdomain); err != nil {
 		panic(err)
+		// return
 	}
-
-	if err := tx.Commit(); err != nil {
-		panic(err)
-	}
+	return
 }
 
-func DeleteMonitor(domain string, subdomain string) {
+func DeleteMonitor(domain string, subdomain string) (err error) {
 	//@title DeleteMonitor
 	//@param domain(string) subdomain(string) checked_time(int)
 	//Return
 	current_time := time.Now().Format("2006-01-02 15:04:05")
 
-	tx := BeginTx()
+	tx, err := db_conn.Begin()
+	if err != nil {
+		panic(err)
+	}
+	defer func() {
+		if err != nil {
+			tx.Rollback()
+		}
+		err = tx.Commit()
+	}()
 	sql_operation := []string{
-		fmt.Sprintf("INSERT OR REPLACE INTO %s (DOMAIN, SUBDOMAIN, UPDATETIME, CHECKEDTIME, ON) VALUES (?, ?, ?, COALESCE((SELECT CHECKEDTIME FROM domains WHERE SUBDOMAIN = ?), 0) + 1),0)", "domains"),
-		fmt.Sprintf("INSERT OR REPLACE INTO %s (DOMAIN, SUBDOMAIN, UPDATETIME, CHECKEDTIME) VALUES (?, ?, ?, COALESCE((SELECT CHECKEDTIME FROM domains WHERE SUBDOMAIN = ?), 0) + 1)", "deleted_domain"),
+		fmt.Sprintf("INSERT OR REPLACE INTO %s (DOMAIN, SUBDOMAIN, UPDATETIME, CHECKEDTIME, IFON) VALUES (?, ?, ?, COALESCE((SELECT CHECKEDTIME FROM domains WHERE SUBDOMAIN = ?), 0) + 1, 0)", "domains"),
+		fmt.Sprintf("INSERT OR REPLACE INTO %s (DOMAIN, SUBDOMAIN, UPDATETIME, CHECKEDTIME) VALUES (?, ?, ?, COALESCE((SELECT CHECKEDTIME FROM domains WHERE SUBDOMAIN = ?), 0) )", "deleted_domains"),
 	}
 	stmt_1, err := tx.Prepare(sql_operation[0])
-	checkErr(err, stmt_1)
+	if err != nil {
+		fmt.Println("error:", err)
+		panic(err)
+	}
 	defer stmt_1.Close()
 	if _, err := stmt_1.Exec(domain, subdomain, current_time, subdomain); err != nil {
 		panic(err)
+		// return
 	}
 
 	stmt_2, err := tx.Prepare(sql_operation[1])
-	checkErr(err, stmt_2)
+	if err != nil {
+		fmt.Println("error:", err)
+		panic(err)
+	}
 	defer stmt_2.Close()
 	if _, err := stmt_2.Exec(domain, subdomain, current_time, subdomain); err != nil {
 		panic(err)
+		// return
 	}
-
-	if err := tx.Commit(); err != nil {
-		panic(err)
-	}
+	return
 }
 
 func GetSubDomianInfo(subdomain string) (dinfos []SubdomainInfos) {
@@ -173,7 +188,10 @@ func GetSubDomianInfo(subdomain string) (dinfos []SubdomainInfos) {
 	//Return
 	sql_operation := "SELECT * FROM domains WHERE subdomain = ?"
 	stmt, err := db_conn.Prepare(sql_operation)
-	checkErr(err, stmt)
+	if err != nil {
+		fmt.Println("error:", err)
+		panic(err)
+	}
 	defer stmt.Close()
 	rows, err := stmt.Query(subdomain)
 	if err != nil {
@@ -183,8 +201,8 @@ func GetSubDomianInfo(subdomain string) (dinfos []SubdomainInfos) {
 
 	for rows.Next() {
 		var _domain, _subdomain, _updatetime string
-		var _checked_time int
-		if err := rows.Scan(&_domain, &_subdomain, &_updatetime, &_checked_time); err != nil {
+		var _checked_time, _ifon int
+		if err := rows.Scan(&_domain, &_subdomain, &_updatetime, &_checked_time, &_ifon); err != nil {
 			panic(err)
 		}
 		info := SubdomainInfos{
