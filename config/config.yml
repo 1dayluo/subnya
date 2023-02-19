@@ -2,10 +2,15 @@ schedule:
   - cron: "* * * *"
 
 monitor:
-
   dir: 
     - "./test"
-
+  settings:
+    - timeout : 30
+    - threads : 10
+    - maxenumerationtime: 10
+    - outfile : "/var/tmp/"
+  
+  
 redis:
   addr: "172.17.0.1:6379"
   password: "" 

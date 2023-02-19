@@ -14,10 +14,10 @@ var db_1 = readconf.ReadSqlConfig("db_1")
 var db_conn *sql.DB
 
 type SubdomainInfos struct {
-	domain      string
-	subdomain   string
-	updatetime  string
-	checkedtime int
+	Domain      string
+	Subdomain   string
+	Updatetime  string
+	Checkedtime int
 }
 
 func InitSqlClient() {
@@ -200,23 +200,23 @@ func GetSubDomianInfo(subdomain string) (dinfos []SubdomainInfos) {
 	defer rows.Close()
 
 	for rows.Next() {
-		var _domain, _subdomain, _updatetime string
-		var _checked_time, _ifon int
-		if err := rows.Scan(&_domain, &_subdomain, &_updatetime, &_checked_time, &_ifon); err != nil {
+		var domain, subdomain, updatetime string
+		var checked_time, ifon int
+		if err := rows.Scan(&domain, &subdomain, &updatetime, &checked_time, &ifon); err != nil {
 			panic(err)
 		}
 		info := SubdomainInfos{
-			domain:      _domain,
-			subdomain:   _subdomain,
-			checkedtime: _checked_time,
-			updatetime:  _updatetime,
+			Domain:      domain,
+			Subdomain:   subdomain,
+			Checkedtime: checked_time,
+			Updatetime:  updatetime,
 		}
 		dinfos = append(dinfos, info)
-		fmt.Printf("Domain: %s, Subdomain: %s, Updatetime: %s, Checkedtime: %d\n", _domain, _subdomain, _updatetime, _checked_time)
-
+		// fmt.Printf("Domain: %s, Subdomain: %s, Updatetime: %s, Checkedtime: %d\n", _domain, _subdomain, _updatetime, _checked_time)
 	}
 	if err := rows.Err(); err != nil {
 		panic(err)
+		return
 	}
 	return
 }
