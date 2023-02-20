@@ -6,7 +6,18 @@ import (
 	"DomainMonitor/pkg/readconf"
 	"fmt"
 	"net/http"
+
+	"github.com/alexflint/go-arg"
 )
+
+type args struct {
+	// -u 查找文件md5的更新，有更新则会单独跑一次数据
+	// -r 对数据库内的监控文件进行内容读取，并查找每个域名下可能的子域名。（最后存储到数据库中）
+	// -output 输出本次更新统计结果的文件|默认输出在终端下
+	UPDATE bool     `arg:"-u,--update" help:"Check update in monitor"`
+	RUN    bool     `arg:"-r,--run" help:"start subdomain finder and update data in sqlite"`
+	OUTPUT []string `arg:"--output"`
+}
 
 func InsertNewFindMd5(fname string, fmd5 string) {
 	//@title InsertNewFindMd5:
@@ -33,7 +44,7 @@ func aliveCheck(url string) (bool, int) {
 func searchAndUpdateMd5() (newMonitorFiles []string) {
 	//@title searchAndUpdateMd5
 	//@param
-	//Return Nil
+	//Return newMonitorFIles []string (Files changed during this check)
 	dirs := readconf.ReadMonitorDir()
 	var dirInfo []map[string]string
 	for _, dir := range dirs {
@@ -58,10 +69,24 @@ func searchAndUpdateMd5() (newMonitorFiles []string) {
 	}
 	return
 }
+
 func main() {
 	fmt.Println("Hello World!")
 	redis.InitClient()
-	searchAndUpdateMd5()
+	var args args
+	arg.MustParse(&args)
+
+	if args.UPDATE {
+
+		searchAndUpdateMd5()
+	}
+	if args.RUN {
+		fmt.Println("some code")
+	}
+	if args.OUTPUT != nil {
+		fmt.Println("some code")
+	}
+
 	// fmt.Printf("\t[Info]New find in files: %v", files)
 	// sqlite.InitSqlClient()
 	// sqlite.Test("abc.com", "xyz.abc.com")
