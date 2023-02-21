@@ -1,11 +1,13 @@
 package main
 
 import (
+	"DomainMonitor/pkg/cmd"
 	redis "DomainMonitor/pkg/db"
 	"DomainMonitor/pkg/io"
 	"DomainMonitor/pkg/readconf"
 	"fmt"
 	"net/http"
+	"sync"
 
 	"github.com/alexflint/go-arg"
 )
@@ -49,36 +51,71 @@ func searchAndUpdateMd5() (newMonitorFiles []string) {
 	var dirInfo []map[string]string
 	for _, dir := range dirs {
 		dirInfo = append(dirInfo, io.ReadFromDir(dir))
-	}
-	for _, finfos := range dirInfo {
-		for fname, fmd5 := range finfos {
-			if redis.CheckMd5InDB(fmd5) {
-				// fmt.Println("\t[Info]Exists:", fname)
-				history_md5 := redis.SearchFileMd5(fname)
-				if history_md5 != fmd5 {
+		for _, finfos := range dirInfo {
+			for fname, fmd5 := range finfos {
+				fname = dir + "/" + fname
+				if redis.CheckMd5InDB(fmd5) {
+					// fmt.Println("\t[Info]Exists:", fname)
+					history_md5 := redis.SearchFileMd5(fname)
+					if history_md5 != fmd5 {
+						InsertNewFindMd5(fname, fmd5)
+						newMonitorFiles = append(newMonitorFiles, fname)
+					}
+				} else { //If fmd5 not in
+					// fmt.Println("\t[Info]Not Exists:", fname)
+					redis.UpdateFileMd5(fname, fmd5)
 					InsertNewFindMd5(fname, fmd5)
 					newMonitorFiles = append(newMonitorFiles, fname)
 				}
-			} else { //If fmd5 not in
-				// fmt.Println("\t[Info]Not Exists:", fname)
-				redis.UpdateFileMd5(fname, fmd5)
-				InsertNewFindMd5(fname, fmd5)
-				newMonitorFiles = append(newMonitorFiles, fname)
 			}
 		}
 	}
+
 	return
+}
+
+func scanSubdomain(domains []string) {
+	//@title scanSubdomain
+	//@param
+	//Return
+	var wg sync.WaitGroup
+	domainCH := make(chan string)
+
+	for i := 0; i < 10; i++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			for domain := range domainCH {
+
+				cmd.FindStart(domain)
+
+			}
+		}()
+	}
+	for _, domain := range domains {
+		domainCH <- domain
+	}
+
+	close(domainCH)
+	wg.Wait()
 }
 
 func main() {
 	fmt.Println("Hello World!")
 	redis.InitClient()
 	var args args
+
 	arg.MustParse(&args)
 
 	if args.UPDATE {
+		files := searchAndUpdateMd5()
+		fmt.Printf("\t[Info]New find in files: %v", files)
+		for _, file := range files {
+			fmt.Println(file)
+			// lines := io.ReadFileContent(file)
 
-		searchAndUpdateMd5()
+		}
+
 	}
 	if args.RUN {
 		fmt.Println("some code")

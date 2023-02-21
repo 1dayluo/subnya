@@ -1,6 +1,7 @@
 package io
 
 import (
+	"bufio"
 	"crypto/md5"
 	"fmt"
 	"io/ioutil"
@@ -34,21 +35,23 @@ func ReadFromDir(dirname string) map[string]string {
 	return fileMap
 }
 
-func check(e error) {
-	//@title check
-	//@param
-	//Return
-	if e != nil {
-		panic(e)
-	}
-}
-func ReadFileContent(fname string) (data []byte) {
+func ReadFileContent(fname string) (data []string) {
 	//@title ReadFileContent:
 	//@param
 	//Return
-	data, err := os.ReadFile(fname)
-	check(err)
+	file, err := os.Open(fname)
+	if err != nil {
+		panic(err)
+	}
+	defer file.Close()
 
+	scanner := bufio.NewScanner(file)
+	for scanner.Scan() {
+		data = append(data, scanner.Text())
+	}
+	if err := scanner.Err(); err != nil {
+		panic(err)
+	}
 	return
 
 }

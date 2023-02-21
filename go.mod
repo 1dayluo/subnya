@@ -3,6 +3,7 @@ module DomainMonitor
 go 1.19
 
 require (
+	github.com/alexflint/go-arg v1.4.3
 	github.com/mattn/go-sqlite3 v1.14.16
 	github.com/projectdiscovery/subfinder/v2 v2.5.5
 	github.com/redis/go-redis/v9 v9.0.2
@@ -10,7 +11,6 @@ require (
 )
 
 require (
-	github.com/alexflint/go-arg v1.4.3 // indirect
 	github.com/alexflint/go-scalar v1.1.0 // indirect
 	github.com/asaskevich/govalidator v0.0.0-20210307081110-f21760c49a8d // indirect
 	github.com/aymerick/douceur v0.2.0 // indirect
