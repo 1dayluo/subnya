@@ -16,7 +16,7 @@ var threads, _ = strconv.Atoi(readconf.ReadSettingsConfig("threads"))
 var timeout, _ = strconv.Atoi(readconf.ReadSettingsConfig("timeout"))
 var maxenumerationtime, _ = strconv.Atoi(readconf.ReadSettingsConfig("maxenumerationtime"))
 
-func FindStart(domain string) {
+func FindStart(domain string) string {
 	//@title FindStart
 	//@param
 	//Return
@@ -40,6 +40,8 @@ func FindStart(domain string) {
 	if err != nil {
 		log.Fatal(err)
 	}
+	// fmt.Printf("data: %s", data)
 
-	fmt.Printf("%s", data)
+	return fmt.Sprintf("%s", data)
+
 }

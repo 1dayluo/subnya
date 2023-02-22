@@ -3,10 +3,12 @@ package main
 import (
 	"DomainMonitor/pkg/cmd"
 	redis "DomainMonitor/pkg/db"
+	sqlite "DomainMonitor/pkg/db"
 	"DomainMonitor/pkg/io"
 	"DomainMonitor/pkg/readconf"
 	"fmt"
 	"net/http"
+	"strings"
 	"sync"
 
 	"github.com/alexflint/go-arg"
@@ -30,13 +32,24 @@ func InsertNewFindMd5(fname string, fmd5 string) {
 
 }
 
+func formaturl(url string) (furl string) {
+	domain := strings.Split(url, "//")
+	if len(domain) == 1 {
+		furl = "http://" + strings.Join(domain, "")
+	} else {
+		furl = url
+	}
+	return
+}
 func aliveCheck(url string) (bool, int) {
 	//@title aliveCheck
 	//@param
 	//Return bool
 	// timeout := time.Duration(2*time.Second)
+	url = formaturl(url)
 	resp, err := http.Get(url)
 	if err != nil {
+		// fmt.Println(err)
 		return false, -1
 	} else {
 		return true, resp.StatusCode
@@ -73,6 +86,16 @@ func searchAndUpdateMd5() (newMonitorFiles []string) {
 
 	return
 }
+func upgradeSubdomainSQL(domain string, subdomains []string) {
+	//@title insertFinder
+	//@param
+	//Return
+	for _, subdomain := range subdomains {
+		// res, code := aliveCheck(subdomain)
+		// fmt.Println(res, code, subdomain)
+		sqlite.AddMonitor(domain, subdomain, -1)
+	}
+}
 
 func scanSubdomain(domains []string) {
 	//@title scanSubdomain
@@ -86,8 +109,8 @@ func scanSubdomain(domains []string) {
 		go func() {
 			defer wg.Done()
 			for domain := range domainCH {
-
-				cmd.FindStart(domain)
+				subdomains := strings.Split(cmd.FindStart(domain), "\n")
+				upgradeSubdomainSQL(domain, subdomains)
 
 			}
 		}()
@@ -104,7 +127,7 @@ func main() {
 	fmt.Println("Hello World!")
 	redis.InitClient()
 	var args args
-
+	sqlite.InitSqlClient()
 	arg.MustParse(&args)
 
 	if args.UPDATE {
@@ -112,8 +135,8 @@ func main() {
 		fmt.Printf("\t[Info]New find in files: %v", files)
 		for _, file := range files {
 			fmt.Println(file)
-			// lines := io.ReadFileContent(file)
-
+			lines := io.ReadFileContent(file)
+			scanSubdomain(lines)
 		}
 
 	}
@@ -125,7 +148,7 @@ func main() {
 	}
 
 	// fmt.Printf("\t[Info]New find in files: %v", files)
-	// sqlite.InitSqlClient()
+	//
 	// sqlite.Test("abc.com", "xyz.abc.com")
 	// sqlite.AddMonitor("abc.com", "xyz.abc.com")
 

@@ -18,6 +18,8 @@ type SubdomainInfos struct {
 	Subdomain   string
 	Updatetime  string
 	Checkedtime int
+	IFON        int
+	STATUS      int
 }
 
 func InitSqlClient() {
@@ -39,7 +41,8 @@ func InitSqlClient() {
 		"SUBDOMAIN"      TEXT  UNIQUE  NOT NULL,
 		"UPDATETIME"     DATE     NOT NULL,
 		"CHECKEDTIME" 	INT NOT NULL,
-		"IFON"		INT NOT NULL
+		"IFON"		INT NOT NULL,
+		"STATUS"		INT
 	 );`
 	addeddomain_table_sql := `CREATE TABLE IF NOT EXISTS  added_domains(
 	"DOMAIN"    TEXT     NOT NULL,
@@ -93,7 +96,7 @@ func Test(domain string, subdomain string) {
 	}
 
 }
-func AddMonitor(domain string, subdomain string) (err error) {
+func AddMonitor(domain string, subdomain string, status int) (err error) {
 	//@title AddMonitor
 	//@param domain(string) subdomain(string) checked_time(int)
 	//Return
@@ -109,7 +112,7 @@ func AddMonitor(domain string, subdomain string) (err error) {
 		err = tx.Commit()
 	}()
 	sql_operation := []string{
-		fmt.Sprintf("INSERT OR REPLACE INTO %s (DOMAIN, SUBDOMAIN, UPDATETIME, CHECKEDTIME, IFON) VALUES (?, ?, ?, COALESCE((SELECT CHECKEDTIME FROM domains WHERE SUBDOMAIN = ?), 0) + 1, 1)", "domains"),
+		fmt.Sprintf("INSERT OR REPLACE INTO %s (DOMAIN, SUBDOMAIN, UPDATETIME, CHECKEDTIME, IFON, STATUS) VALUES (?, ?, ?, COALESCE((SELECT CHECKEDTIME FROM domains WHERE SUBDOMAIN = ?), 0) + 1, 1, ?)", "domains"),
 		fmt.Sprintf("INSERT OR REPLACE INTO %s (DOMAIN, SUBDOMAIN, UPDATETIME, CHECKEDTIME) VALUES (?, ?, ?, COALESCE((SELECT CHECKEDTIME FROM domains WHERE SUBDOMAIN = ?), 0 ))", "added_domains"),
 	}
 	stmt_1, err := tx.Prepare(sql_operation[0])
@@ -119,7 +122,7 @@ func AddMonitor(domain string, subdomain string) (err error) {
 	}
 	defer stmt_1.Close()
 
-	if _, err := stmt_1.Exec(domain, subdomain, current_time, subdomain); err != nil {
+	if _, err := stmt_1.Exec(domain, subdomain, current_time, subdomain, status); err != nil {
 		panic(err)
 		// return
 	}
@@ -138,7 +141,7 @@ func AddMonitor(domain string, subdomain string) (err error) {
 	return
 }
 
-func DeleteMonitor(domain string, subdomain string) (err error) {
+func DeleteMonitor(domain string, subdomain string, status int) (err error) {
 	//@title DeleteMonitor
 	//@param domain(string) subdomain(string) checked_time(int)
 	//Return
@@ -155,7 +158,7 @@ func DeleteMonitor(domain string, subdomain string) (err error) {
 		err = tx.Commit()
 	}()
 	sql_operation := []string{
-		fmt.Sprintf("INSERT OR REPLACE INTO %s (DOMAIN, SUBDOMAIN, UPDATETIME, CHECKEDTIME, IFON) VALUES (?, ?, ?, COALESCE((SELECT CHECKEDTIME FROM domains WHERE SUBDOMAIN = ?), 0) + 1, 0)", "domains"),
+		fmt.Sprintf("INSERT OR REPLACE INTO %s (DOMAIN, SUBDOMAIN, UPDATETIME, CHECKEDTIME, IFON, STATUS) VALUES (?, ?, ?, COALESCE((SELECT CHECKEDTIME FROM domains WHERE SUBDOMAIN = ?), 0) + 1, 0, ?)", "domains"),
 		fmt.Sprintf("INSERT OR REPLACE INTO %s (DOMAIN, SUBDOMAIN, UPDATETIME, CHECKEDTIME) VALUES (?, ?, ?, COALESCE((SELECT CHECKEDTIME FROM domains WHERE SUBDOMAIN = ?), 0) )", "deleted_domains"),
 	}
 	stmt_1, err := tx.Prepare(sql_operation[0])
@@ -164,7 +167,7 @@ func DeleteMonitor(domain string, subdomain string) (err error) {
 		panic(err)
 	}
 	defer stmt_1.Close()
-	if _, err := stmt_1.Exec(domain, subdomain, current_time, subdomain); err != nil {
+	if _, err := stmt_1.Exec(domain, subdomain, current_time, subdomain, status); err != nil {
 		panic(err)
 		// return
 	}
@@ -201,8 +204,8 @@ func GetSubDomianInfo(subdomain string) (dinfos []SubdomainInfos) {
 
 	for rows.Next() {
 		var domain, subdomain, updatetime string
-		var checked_time, ifon int
-		if err := rows.Scan(&domain, &subdomain, &updatetime, &checked_time, &ifon); err != nil {
+		var checked_time, ifon, status int
+		if err := rows.Scan(&domain, &subdomain, &updatetime, &checked_time, &ifon, &status); err != nil {
 			panic(err)
 		}
 		info := SubdomainInfos{
@@ -210,13 +213,14 @@ func GetSubDomianInfo(subdomain string) (dinfos []SubdomainInfos) {
 			Subdomain:   subdomain,
 			Checkedtime: checked_time,
 			Updatetime:  updatetime,
+			IFON:        ifon,
+			STATUS:      status,
 		}
 		dinfos = append(dinfos, info)
 		// fmt.Printf("Domain: %s, Subdomain: %s, Updatetime: %s, Checkedtime: %d\n", _domain, _subdomain, _updatetime, _checked_time)
 	}
 	if err := rows.Err(); err != nil {
 		panic(err)
-		return
 	}
 	return
 }
