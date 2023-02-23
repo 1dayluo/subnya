@@ -86,6 +86,7 @@ func searchAndUpdateMd5() (newMonitorFiles []string) {
 
 	return
 }
+
 func upgradeSubdomainSQL(domain string, subdomains []string) {
 	//@title insertFinder
 	//@param
@@ -125,7 +126,9 @@ func scanSubdomain(domains []string) {
 
 func main() {
 	fmt.Println("Hello World!")
-	redis.InitClient()
+	if err := redis.InitClient(); err != nil {
+		panic(err)
+	}
 	var args args
 	sqlite.InitSqlClient()
 	arg.MustParse(&args)
@@ -141,7 +144,8 @@ func main() {
 
 	}
 	if args.RUN {
-		fmt.Println("some code")
+		domains := sqlite.Getdomains()
+		scanSubdomain(domains)
 	}
 	if args.OUTPUT != nil {
 		fmt.Println("some code")
