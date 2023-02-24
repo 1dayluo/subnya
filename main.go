@@ -86,7 +86,46 @@ func searchAndUpdateMd5() (newMonitorFiles []string) {
 
 	return
 }
+func difference(a, b []string) []string {
+	//@title difference
+	//@param
+	//Return
+	mb := make(map[string]struct{}, len(b))
+	for _, x := range b {
+		mb[x] = struct{}{}
+	}
+	var diff []string
+	for _, x := range a {
+		if _, found := mb[x]; !found {
+			diff = append(diff, x)
+		}
+	}
+	return diff
+}
+func intersect(slice1, slice2 []string) []string {
+	var intersect []string
+	for _, element1 := range slice1 {
+		for _, element2 := range slice2 {
+			if element1 == element2 {
+				intersect = append(intersect, element1)
+			}
+		}
+	}
+	return intersect //return slice after intersection
+}
+func get_changed(return_domains, db_domains []string) (added_domains []string, deled_domains []string) {
+	//@title get_changed
+	//@param
+	//Return
+	same_domain := intersect(return_domains, db_domains)
+	if len(return_domains) > len(db_domains) {
+		added_domains = difference(return_domains, same_domain)
+	} else {
+		deled_domains = difference(db_domains, same_domain)
+	}
+	return added_domains, deled_domains
 
+}
 func upgradeSubdomainSQL(domain string, subdomains []string) {
 	//@title insertFinder
 	//@param
