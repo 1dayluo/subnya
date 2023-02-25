@@ -120,13 +120,14 @@ func get_changed(return_domains, db_domains []string) (added_domains []string, d
 	same_domain := intersect(return_domains, db_domains)
 	if len(return_domains) > len(db_domains) {
 		added_domains = difference(return_domains, same_domain)
-	} else {
+	}
+	if len(return_domains) < len(db_domains) {
 		deled_domains = difference(db_domains, same_domain)
 	}
 	return added_domains, deled_domains
 
 }
-func upgradeSubdomainSQL(domain string, subdomains []string) {
+func upgradeAddSubdomainSQL(domain string, subdomains []string) {
 	//@title insertFinder
 	//@param
 	//Return
@@ -137,11 +138,22 @@ func upgradeSubdomainSQL(domain string, subdomains []string) {
 	}
 }
 
+func upgradeDelSubdomainSQL(domain string, subdomains []string) {
+	//@title insertFinder
+	//@param
+	//Return
+	for _, subdomain := range subdomains {
+		// res, code := aliveCheck(subdomain)
+		// fmt.Println(res, code, subdomain)
+		sqlite.DeleteMonitor(domain, subdomain, -1)
+	}
+}
 func scanSubdomain(domains []string) {
 	//@title scanSubdomain
 	//@param
 	//Return
 	var wg sync.WaitGroup
+	var mu sync.Mutex
 	domainCH := make(chan string)
 
 	for i := 0; i < 10; i++ {
@@ -149,18 +161,32 @@ func scanSubdomain(domains []string) {
 		go func() {
 			defer wg.Done()
 			for domain := range domainCH {
+				monitoredSub := sqlite.GetMonitoredSub(domain)
 				subdomains := strings.Split(cmd.FindStart(domain), "\n")
-				upgradeSubdomainSQL(domain, subdomains)
-
+				added, deled := get_changed(subdomains, monitoredSub)
+				if added != nil {
+					mu.Lock()
+					upgradeAddSubdomainSQL(domain, subdomains)
+					mu.Unlock()
+				}
+				if deled != nil {
+					mu.Lock()
+					upgradeDelSubdomainSQL(domain, subdomains)
+					mu.Unlock()
+				}
 			}
 		}()
 	}
+
 	for _, domain := range domains {
 		domainCH <- domain
 	}
 
 	close(domainCH)
 	wg.Wait()
+	return
+	// get_changed(subdomains, monitored_domains)
+	// upgradeSubdomainSQL(domain, subdomains)
 }
 
 func main() {
@@ -179,6 +205,7 @@ func main() {
 			fmt.Println(file)
 			lines := io.ReadFileContent(file)
 			scanSubdomain(lines)
+
 		}
 
 	}

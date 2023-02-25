@@ -254,3 +254,33 @@ func Getdomains() (domains []string) {
 	}
 	return
 }
+
+func GetMonitoredSub(domain string) (domains []string) {
+	//@title getDomains
+	//@param
+	//Return
+	sql_op := "SELECT SUBDOMAIN FROM domains  WHERE IFON = 1 AND DOMAIN = ?"
+	stmt, err := db_conn.Prepare(sql_op)
+	if err != nil {
+		fmt.Println("error:", err)
+		panic(err)
+	}
+	defer stmt.Close()
+	rows, err := stmt.Query(domain)
+	if err != nil {
+		panic(err)
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var domain string
+		if err := rows.Scan(&domain); err != nil {
+			panic(err)
+		}
+		domains = append(domains, domain)
+		// fmt.Printf("Domain: %s, Subdomain: %s, Updatetime: %s, Checkedtime: %d\n", _domain, _subdomain, _updatetime, _checked_time)
+	}
+	if err := rows.Err(); err != nil {
+		panic(err)
+	}
+	return
+}
