@@ -16,11 +16,21 @@ import (
 
 type args struct {
 	// -u 查找文件md5的更新，有更新则会单独跑一次数据
-	// -r 对数据库内的监控文件进行内容读取，并查找每个域名下可能的子域名。（最后存储到数据库中）
+	// -r 对数据库内的监控文件进行内容读取，并查找每个域名下可能的子域名。（最后存储到数据库中/验活）
 	// -output 输出本次更新统计结果的文件|默认输出在终端下
 	UPDATE bool     `arg:"-u,--update" help:"Check update in monitor"`
-	RUN    bool     `arg:"-r,--run" help:"start subdomain finder and update data in sqlite"`
+	RUN    bool     `arg:"-r,--run" help:"start subdomain finder and update data(include response status code) in sqlite"`
 	OUTPUT []string `arg:"--output"`
+}
+
+type MonitorResult struct {
+	Domain    string
+	Subdomain string
+	Code      int
+}
+type CacheDomain struct {
+	Domain    string
+	Subdomain string
 }
 
 func InsertNewFindMd5(fname string, fmd5 string) {
@@ -161,7 +171,9 @@ func scanSubdomain(domains []string) {
 		go func() {
 			defer wg.Done()
 			for domain := range domainCH {
+				mu.Lock()
 				monitoredSub := sqlite.GetMonitoredSub(domain)
+				mu.Unlock()
 				subdomains := strings.Split(cmd.FindStart(domain), "\n")
 				added, deled := get_changed(subdomains, monitoredSub)
 				if added != nil {
@@ -189,6 +201,52 @@ func scanSubdomain(domains []string) {
 	// upgradeSubdomainSQL(domain, subdomains)
 }
 
+func RunCheck(domains []string) {
+	//@title RunCheck
+	//@param
+	//Return
+
+	var wg sync.WaitGroup
+	var mu sync.Mutex
+	subdomainsCH := make(chan CacheDomain)
+	resultsCH := make(chan MonitorResult)
+
+	// Spawn worker goroutines
+	for i := 0; i < 100; i++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			for subdomainInfo := range subdomainsCH {
+				_, code := aliveCheck(subdomainInfo.Subdomain)
+				resultsCH <- MonitorResult{Domain: subdomainInfo.Domain, Subdomain: subdomainInfo.Subdomain, Code: code}
+			}
+		}()
+	}
+
+	// Spawn separate goroutine to send domains to the channel
+	go func() {
+		for _, domain := range domains {
+			subdomains := strings.Split(cmd.FindStart(domain), "\n")
+			for _, subdomain := range subdomains {
+				subdomainsCH <- CacheDomain{Domain: domain, Subdomain: subdomain}
+			}
+		}
+		close(subdomainsCH)
+	}()
+
+	// Collect results
+	go func() {
+		for result := range resultsCH {
+			mu.Lock()
+			sqlite.AddMonitor(result.Domain, result.Subdomain, result.Code)
+			mu.Unlock()
+		}
+	}()
+
+	wg.Wait()
+	close(resultsCH)
+}
+
 func main() {
 	fmt.Println("Hello World!")
 	if err := redis.InitClient(); err != nil {
@@ -205,21 +263,14 @@ func main() {
 			fmt.Println(file)
 			lines := io.ReadFileContent(file)
 			scanSubdomain(lines)
-
 		}
-
 	}
 	if args.RUN {
 		domains := sqlite.Getdomains()
-		scanSubdomain(domains)
+		RunCheck(domains)
 	}
 	if args.OUTPUT != nil {
 		fmt.Println("some code")
 	}
-
-	// fmt.Printf("\t[Info]New find in files: %v", files)
-	//
-	// sqlite.Test("abc.com", "xyz.abc.com")
-	// sqlite.AddMonitor("abc.com", "xyz.abc.com")
 
 }
