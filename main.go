@@ -32,6 +32,11 @@ type CacheDomain struct {
 	Domain    string
 	Subdomain string
 }
+type ResultOutput struct {
+	Domain string
+	Added  []string
+	Deled  []string
+}
 
 func InsertNewFindMd5(fname string, fmd5 string) {
 	//@title InsertNewFindMd5:
@@ -158,7 +163,7 @@ func upgradeDelSubdomainSQL(domain string, subdomains []string) {
 		sqlite.DeleteMonitor(domain, subdomain, -1)
 	}
 }
-func scanSubdomain(domains []string) {
+func scanSubdomain(domains []string) (resuts []ResultOutput) {
 	//@title scanSubdomain
 	//@param
 	//Return
@@ -179,11 +184,13 @@ func scanSubdomain(domains []string) {
 				if added != nil {
 					mu.Lock()
 					upgradeAddSubdomainSQL(domain, subdomains)
+					resuts = append(resuts, ResultOutput{Domain: domain, Added: subdomains, Deled: nil})
 					mu.Unlock()
 				}
 				if deled != nil {
 					mu.Lock()
 					upgradeDelSubdomainSQL(domain, subdomains)
+					resuts = append(resuts, ResultOutput{Domain: domain, Added: nil, Deled: subdomains})
 					mu.Unlock()
 				}
 			}
@@ -262,7 +269,10 @@ func main() {
 		for _, file := range files {
 			fmt.Println(file)
 			lines := io.ReadFileContent(file)
-			scanSubdomain(lines)
+			results := scanSubdomain(lines)
+			for _, item := range results {
+				fmt.Printf("[Domain]:%v, \n\t[+]number of new subdomains:%v \n\t[-]reduce the number of subdomains: %v", item.Domain, len(item.Added), len(item.Deled))
+			}
 		}
 	}
 	if args.RUN {
