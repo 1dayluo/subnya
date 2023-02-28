@@ -208,7 +208,7 @@ func scanSubdomain(domains []string) (resuts []ResultOutput) {
 	// upgradeSubdomainSQL(domain, subdomains)
 }
 
-func RunCheck(domains []string) {
+func RunCheck(domains []string) (res []string) {
 	//@title RunCheck
 	//@param
 	//Return
@@ -246,12 +246,14 @@ func RunCheck(domains []string) {
 		for result := range resultsCH {
 			mu.Lock()
 			sqlite.AddMonitor(result.Domain, result.Subdomain, result.Code)
+			res = append(res, result.Subdomain)
 			mu.Unlock()
 		}
 	}()
 
 	wg.Wait()
 	close(resultsCH)
+	return
 }
 
 func main() {
@@ -278,6 +280,14 @@ func main() {
 	if args.RUN {
 		domains := sqlite.Getdomains()
 		RunCheck(domains)
+		// validNum := 0
+		// for _, subdomain := range runSubdomains{
+		// 	dinfos := sqlite.GetSubDomianInfo(subdomain)[0]
+		// 	if dinfos.IFON == 1 && dinfos.STATUS != -1 {
+		// 		validNum += 1
+		// 	}
+		// }
+
 	}
 	if args.OUTPUT != nil {
 		fmt.Println("some code")
