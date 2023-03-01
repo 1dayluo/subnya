@@ -8,7 +8,7 @@ monitor:
     - timeout : 30
     - threads : 10
     - maxenumerationtime: 10
-    - outfile : "/var/tmp/"
+    - outfile : "./output"
   
   
 redis:

@@ -208,13 +208,14 @@ func scanSubdomain(domains []string) (resuts []ResultOutput) {
 	// upgradeSubdomainSQL(domain, subdomains)
 }
 
-func RunCheck(domains []string) (res []string) {
+func RunCheck(domains []string) map[string][]MonitorResult {
 	//@title RunCheck
 	//@param
 	//Return
 
 	var wg sync.WaitGroup
 	var mu sync.Mutex
+	res := make(map[string][]MonitorResult)
 	subdomainsCH := make(chan CacheDomain)
 	resultsCH := make(chan MonitorResult)
 
@@ -245,15 +246,20 @@ func RunCheck(domains []string) (res []string) {
 	go func() {
 		for result := range resultsCH {
 			mu.Lock()
+			if _, ok := res[result.Domain]; ok {
+				res[result.Domain] = append(res[result.Domain], result)
+			} else {
+				res[result.Domain] = []MonitorResult{result}
+			}
+
 			sqlite.AddMonitor(result.Domain, result.Subdomain, result.Code)
-			res = append(res, result.Subdomain)
 			mu.Unlock()
 		}
 	}()
 
 	wg.Wait()
 	close(resultsCH)
-	return
+	return res
 }
 
 func main() {
@@ -273,20 +279,18 @@ func main() {
 			lines := io.ReadFileContent(file)
 			results := scanSubdomain(lines)
 			for _, item := range results {
-				fmt.Printf("[Domain]:%v, \n\t[+]number of new subdomains:%v \n\t[-]reduce the number of subdomains: %v", item.Domain, len(item.Added), len(item.Deled))
+				fmt.Printf("\n[INFO] Domain:%v, \n\t[+]number of new subdomains:%v \n\t[-]reduce the number of subdomains: %v", item.Domain, len(item.Added), len(item.Deled))
 			}
 		}
 	}
 	if args.RUN {
 		domains := sqlite.Getdomains()
-		RunCheck(domains)
-		// validNum := 0
-		// for _, subdomain := range runSubdomains{
-		// 	dinfos := sqlite.GetSubDomianInfo(subdomain)[0]
-		// 	if dinfos.IFON == 1 && dinfos.STATUS != -1 {
-		// 		validNum += 1
-		// 	}
-		// }
+		runResult := RunCheck(domains)
+		keys := make([]string, 0, len(runResult))
+		for k := range runResult {
+			keys = append(keys, k)
+		}
+		fmt.Printf("[INFO] %v domain was updated", len(keys))
 
 	}
 	if args.OUTPUT != nil {
