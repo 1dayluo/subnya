@@ -2,6 +2,7 @@
 package db
 
 import (
+	"DomainMonitor/pkg/logutil"
 	"DomainMonitor/pkg/readconf"
 	"database/sql"
 	"fmt"
@@ -44,13 +45,13 @@ func InitSqlClient() {
 		"IFON"		INT NOT NULL,
 		"STATUS"		INT
 	 );`
-	addeddomain_table_sql := `CREATE TABLE IF NOT EXISTS  added_domains(
+	addeddomain_table_sql := `CREATE  TABLE IF NOT EXISTS  added_domains(
 	"DOMAIN"    TEXT     NOT NULL,
 	"SUBDOMAIN"      TEXT   UNIQUE  NOT NULL,
 	"UPDATETIME"     DATE     NOT NULL,
 	"CHECKEDTIME" 	INT NOT NULL
 	);`
-	deleteddomain_table_sql := `CREATE TABLE IF NOT EXISTS deleted_domains(
+	deleteddomain_table_sql := `CREATE a TABLE IF NOT EXISTS deleted_domains(
 		"DOMAIN"    TEXT     NOT NULL,
 		"SUBDOMAIN"      TEXT UNIQUE NOT NULL,
 		"UPDATETIME"     DATE     NOT NULL,
@@ -60,7 +61,7 @@ func InitSqlClient() {
 	for _, v := range create_tables_sql {
 		query, err := db_conn.Prepare(v)
 		if err != nil {
-			fmt.Println("Err:", err)
+			logutil.Logf("[Err]:error in sql:  %v", err)
 			panic(err)
 		}
 		defer query.Exec()
@@ -117,7 +118,7 @@ func AddMonitor(domain string, subdomain string, status int) (err error) {
 	}
 	stmt_1, err := tx.Prepare(sql_operation[0])
 	if err != nil {
-		fmt.Println("error:", err)
+		logutil.Logf("[ERROR]error when update tables:%v", err)
 		panic(err)
 	}
 	defer stmt_1.Close()
@@ -163,7 +164,7 @@ func DeleteMonitor(domain string, subdomain string, status int) (err error) {
 	}
 	stmt_1, err := tx.Prepare(sql_operation[0])
 	if err != nil {
-		fmt.Println("error:", err)
+		logutil.Logf("[ERROR]error when update tables:%v", err)
 		panic(err)
 	}
 	defer stmt_1.Close()
@@ -192,7 +193,7 @@ func GetSubDomianInfo(subdomain string) (dinfos []SubdomainInfos) {
 	sql_operation := "SELECT * FROM domains WHERE subdomain = ?"
 	stmt, err := db_conn.Prepare(sql_operation)
 	if err != nil {
-		fmt.Println("error:", err)
+		logutil.Logf("[ERROR]error when get infos from tables:%v", err)
 		panic(err)
 	}
 	defer stmt.Close()
@@ -250,6 +251,7 @@ func Getdomains() (domains []string) {
 		// fmt.Printf("Domain: %s, Subdomain: %s, Updatetime: %s, Checkedtime: %d\n", _domain, _subdomain, _updatetime, _checked_time)
 	}
 	if err := rows.Err(); err != nil {
+		logutil.Logf("[ERROR]%v", err)
 		panic(err)
 	}
 	return
@@ -280,6 +282,7 @@ func GetMonitoredSub(domain string) (domains []string) {
 		// fmt.Printf("Domain: %s, Subdomain: %s, Updatetime: %s, Checkedtime: %d\n", _domain, _subdomain, _updatetime, _checked_time)
 	}
 	if err := rows.Err(); err != nil {
+		logutil.Logf("[ERROR]%v", err)
 		panic(err)
 	}
 	return

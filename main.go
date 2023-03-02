@@ -5,6 +5,7 @@ import (
 	redis "DomainMonitor/pkg/db"
 	sqlite "DomainMonitor/pkg/db"
 	"DomainMonitor/pkg/io"
+	"DomainMonitor/pkg/logutil"
 	"DomainMonitor/pkg/readconf"
 	"fmt"
 	"net/http"
@@ -263,11 +264,20 @@ func RunCheck(domains []string) map[string][]MonitorResult {
 }
 
 func main() {
-	fmt.Println("Hello World!")
+	var savePath = readconf.ReadSettingsConfig("logfile") + "app.log"
+	var args args
+	logger, err := logutil.NewFileLogger(savePath)
+	if err != nil {
+		logutil.Logf("Failed to create file logger: %v", err)
+	}
+	defer logger.Close()
+	// logutil.SetLogger(logger.Logger)
+
 	if err := redis.InitClient(); err != nil {
+		logutil.Logf("[Err]:error in sql:  %v", err)
 		panic(err)
 	}
-	var args args
+
 	sqlite.InitSqlClient()
 	arg.MustParse(&args)
 

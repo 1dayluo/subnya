@@ -9,6 +9,7 @@ monitor:
     - threads : 10
     - maxenumerationtime: 10
     - outfile : "./output"
+    - logfile: "./output/log/"
   
   
 redis:
@@ -18,4 +19,3 @@ redis:
 
 sqlite:
   db_1: "./db/monitor.db"
-  
