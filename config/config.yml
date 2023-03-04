@@ -5,11 +5,11 @@ monitor:
   dir: 
     - "./test"
   settings:
-    - timeout : 30
-    - threads : 10
-    - maxenumerationtime: 10
-    - outfile : "./output"
-    - logfile: "./output/log/"
+    timeout : 30
+    threads : 10
+    maxenumerationtime: 10
+    outfile : "./output"
+    logfile: "./log/"
   
   
 redis:

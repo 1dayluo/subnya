@@ -1,3 +1,4 @@
 /test
-/output
+/output/*
+/log/*.log
 *.db

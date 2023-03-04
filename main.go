@@ -264,21 +264,11 @@ func RunCheck(domains []string) map[string][]MonitorResult {
 }
 
 func main() {
-	var savePath = readconf.ReadSettingsConfig("logfile") + "app.log"
 	var args args
-	logger, err := logutil.NewFileLogger(savePath)
-	if err != nil {
-		logutil.Logf("Failed to create file logger: %v", err)
-	}
-	defer logger.Close()
-	// logutil.SetLogger(logger.Logger)
-
-	if err := redis.InitClient(); err != nil {
-		logutil.Logf("[Err]:error in sql:  %v", err)
-		panic(err)
+	if err := logutil.Init(); err != nil {
+		logutil.Logf("Failed to initialize logger: %v", err)
 	}
 
-	sqlite.InitSqlClient()
 	arg.MustParse(&args)
 
 	if args.UPDATE {

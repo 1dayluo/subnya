@@ -17,7 +17,6 @@ func NewFileLogger(filename string) (*FileLogger, error) {
 	//@param
 	//Return
 
-	fmt.Println(filename)
 	file, err := os.OpenFile(filename, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
 	if err != nil {
 		return nil, fmt.Errorf("failed to open log file: %v", err)
@@ -35,5 +34,6 @@ func (l *FileLogger) Close() error {
 	//@title Close:
 	//@param
 	//Return
-	return l.Close()
+	return l.File.Close()
+
 }

@@ -4,7 +4,6 @@ go 1.19
 
 require (
 	github.com/alexflint/go-arg v1.4.3
-	github.com/juliangruber/go-intersect v1.1.0
 	github.com/mattn/go-sqlite3 v1.14.16
 	github.com/projectdiscovery/subfinder/v2 v2.5.5
 	github.com/redis/go-redis/v9 v9.0.2

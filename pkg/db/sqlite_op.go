@@ -23,10 +23,14 @@ type SubdomainInfos struct {
 	STATUS      int
 }
 
-func InitSqlClient() {
+func init() {
 	//@title InitSqlClient
 	//@param
 	//Return
+	if err := logutil.Init(); err != nil {
+		logutil.Logf("Failed to initialize logger: %v", err)
+	}
+
 	var err error
 	db_conn, err = sql.Open("sqlite3", db_1)
 	if err != nil {
@@ -51,7 +55,7 @@ func InitSqlClient() {
 	"UPDATETIME"     DATE     NOT NULL,
 	"CHECKEDTIME" 	INT NOT NULL
 	);`
-	deleteddomain_table_sql := `CREATE a TABLE IF NOT EXISTS deleted_domains(
+	deleteddomain_table_sql := `CREATE TABLE IF NOT EXISTS deleted_domains(
 		"DOMAIN"    TEXT     NOT NULL,
 		"SUBDOMAIN"      TEXT UNIQUE NOT NULL,
 		"UPDATETIME"     DATE     NOT NULL,
@@ -61,7 +65,7 @@ func InitSqlClient() {
 	for _, v := range create_tables_sql {
 		query, err := db_conn.Prepare(v)
 		if err != nil {
-			logutil.Logf("[Err]:error in sql:  %v", err)
+			logutil.Logf("[Err]:error in sql:", err)
 			panic(err)
 		}
 		defer query.Exec()
@@ -104,6 +108,7 @@ func AddMonitor(domain string, subdomain string, status int) (err error) {
 	current_time := time.Now().Format("2006-01-02 15:04:05")
 	tx, err := db_conn.Begin()
 	if err != nil {
+		logutil.Logf("[Err]:error in sql:  %v", err)
 		panic(err)
 	}
 	defer func() {
@@ -124,18 +129,20 @@ func AddMonitor(domain string, subdomain string, status int) (err error) {
 	defer stmt_1.Close()
 
 	if _, err := stmt_1.Exec(domain, subdomain, current_time, subdomain, status); err != nil {
+		logutil.Logf("[Err]:error in sql:  %v", err)
 		panic(err)
 		// return
 	}
 
 	stmt_2, err := tx.Prepare(sql_operation[1])
 	if err != nil {
-		fmt.Println("error:", err)
+		logutil.Logf("[Err]:error in sql:  %v", err)
 		panic(err)
 	}
 	defer stmt_2.Close()
 
 	if _, err := stmt_2.Exec(domain, subdomain, current_time, subdomain); err != nil {
+		logutil.Logf("[Err]:error in sql:  %v", err)
 		panic(err)
 		// return
 	}
@@ -150,6 +157,7 @@ func DeleteMonitor(domain string, subdomain string, status int) (err error) {
 
 	tx, err := db_conn.Begin()
 	if err != nil {
+		logutil.Logf("[Err]:error in sql:  %v", err)
 		panic(err)
 	}
 	defer func() {
@@ -169,17 +177,19 @@ func DeleteMonitor(domain string, subdomain string, status int) (err error) {
 	}
 	defer stmt_1.Close()
 	if _, err := stmt_1.Exec(domain, subdomain, current_time, subdomain, status); err != nil {
+		logutil.Logf("[Err]:error in sql:  %v", err)
 		panic(err)
 		// return
 	}
 
 	stmt_2, err := tx.Prepare(sql_operation[1])
 	if err != nil {
-		fmt.Println("error:", err)
+		logutil.Logf("[Err]:error in sql:  %v", err)
 		panic(err)
 	}
 	defer stmt_2.Close()
 	if _, err := stmt_2.Exec(domain, subdomain, current_time, subdomain); err != nil {
+		logutil.Logf("[Err]:error in sql:  %v", err)
 		panic(err)
 		// return
 	}
@@ -233,18 +243,20 @@ func Getdomains() (domains []string) {
 	sql_op := "SELECT DOMAIN FROM domains GROUP BY DOMAIN"
 	stmt, err := db_conn.Prepare(sql_op)
 	if err != nil {
-		fmt.Println("error:", err)
+		logutil.Logf("[Err]:error in sql:  %v", err)
 		panic(err)
 	}
 	defer stmt.Close()
 	rows, err := stmt.Query()
 	if err != nil {
+		logutil.Logf("[Err]:error in sql:  %v", err)
 		panic(err)
 	}
 	defer rows.Close()
 	for rows.Next() {
 		var domain string
 		if err := rows.Scan(&domain); err != nil {
+			logutil.Logf("[Err]:error in sql:  %v", err)
 			panic(err)
 		}
 		domains = append(domains, domain)
@@ -264,12 +276,13 @@ func GetMonitoredSub(domain string) (domains []string) {
 	sql_op := "SELECT SUBDOMAIN FROM domains  WHERE IFON = 1 AND DOMAIN = ?"
 	stmt, err := db_conn.Prepare(sql_op)
 	if err != nil {
-		fmt.Println("error:", err)
+		logutil.Logf("[Err]:error in sql:  %v", err)
 		panic(err)
 	}
 	defer stmt.Close()
 	rows, err := stmt.Query(domain)
 	if err != nil {
+		logutil.Logf("[Err]:error in sql:  %v", err)
 		panic(err)
 	}
 	defer rows.Close()

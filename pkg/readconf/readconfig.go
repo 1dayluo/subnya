@@ -77,7 +77,8 @@ func ReadSettingsConfig(key string) string {
 	if err := viper.ReadInConfig(); err != nil {
 		fmt.Println("read config file failed:", err)
 	}
+
 	// fmt.Println(viper.GetString(fmt.Sprintf("database.%s", key)))
-	return viper.GetString(fmt.Sprintf("monitor.setting.%s", key))
+	return viper.GetString(fmt.Sprintf("monitor.settings.%s", key))
 
 }

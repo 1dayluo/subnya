@@ -2,6 +2,7 @@
 package db
 
 import (
+	"DomainMonitor/pkg/logutil"
 	"DomainMonitor/pkg/readconf"
 	"context"
 	"fmt"
@@ -19,8 +20,10 @@ var (
 )
 var ctx = context.Background()
 
-func InitClient() (err error) {
-	fmt.Println(db_link, db_pass, db_db)
+func init() {
+	if err := logutil.Init(); err != nil {
+		logutil.Logf("Failed to initialize logger: %v", err)
+	}
 	rdb = redis.NewClient(&redis.Options{
 		Addr:     db_link,
 		Password: db_pass,
@@ -28,9 +31,11 @@ func InitClient() (err error) {
 	})
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
-	_, err = rdb.Ping(ctx).Result()
+	_, err := rdb.Ping(ctx).Result()
 	rdb.Del(ctx, "fmd5test") // use For test
-	return err
+	if err != nil {
+		logutil.Logf("[ERR]:", err)
+	}
 }
 
 func SetMd5InDB(fileMd5 string) {
@@ -39,7 +44,7 @@ func SetMd5InDB(fileMd5 string) {
 	//Return Nil
 	err := rdb.SAdd(ctx, "fmd5", fileMd5, 0).Err()
 	if err != nil {
-		fmt.Println("\tError:", err)
+		logutil.Logf("[Err]:error in redis:  %v", err)
 	}
 }
 
