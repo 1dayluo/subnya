@@ -1,6 +1,8 @@
 package io
 
 import (
+	"DomainMonitor/pkg/db"
+	"DomainMonitor/pkg/readconf"
 	"bufio"
 	"crypto/md5"
 	"fmt"
@@ -54,4 +56,35 @@ func ReadFileContent(fname string) (data []string) {
 	}
 	return
 
+}
+
+func SearchAndUpdateMd5() (newMonitorFiles []string) {
+	//@title searchAndUpdateMd5
+	//@param
+	//Return newMonitorFIles []string (Files changed during this check)
+	dirs := readconf.ReadMonitorDir()
+	var dirInfo []map[string]string
+	for _, dir := range dirs {
+		dirInfo = append(dirInfo, ReadFromDir(dir))
+		for _, finfos := range dirInfo {
+			for fname, fmd5 := range finfos {
+				fname = dir + "/" + fname
+				if db.CheckMd5InDB(fmd5) {
+					// fmt.Println("\t[Info]Exists:", fname)
+					history_md5 := db.SearchFileMd5(fname)
+					if history_md5 != fmd5 {
+						db.InsertNewFindMd5(fname, fmd5)
+						newMonitorFiles = append(newMonitorFiles, fname)
+					}
+				} else { //If fmd5 not in
+					// fmt.Println("\t[Info]Not Exists:", fname)
+					db.InsertNewFindMd5(fname, fmd5)
+
+					newMonitorFiles = append(newMonitorFiles, fname)
+				}
+			}
+		}
+	}
+
+	return
 }

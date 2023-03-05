@@ -95,3 +95,12 @@ func CheckMd5InDB(fileMd5 string) bool {
 	return false
 
 }
+
+func InsertNewFindMd5(fname string, fmd5 string) {
+	//@title InsertNewFindMd5:
+	//@param
+	//Return
+	SetMd5InDB(fmd5)
+	UpdateFileMd5(fname, fmd5)
+
+}

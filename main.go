@@ -2,11 +2,10 @@ package main
 
 import (
 	"DomainMonitor/pkg/cmd"
-	redis "DomainMonitor/pkg/db"
+	// redis "DomainMonitor/pkg/db"
 	sqlite "DomainMonitor/pkg/db"
 	"DomainMonitor/pkg/io"
 	"DomainMonitor/pkg/logutil"
-	"DomainMonitor/pkg/readconf"
 	"fmt"
 	"net/http"
 	"strings"
@@ -24,28 +23,15 @@ type args struct {
 	OUTPUT []string `arg:"--output"`
 }
 
-type MonitorResult struct {
-	Domain    string
-	Subdomain string
-	Code      int
-}
-type CacheDomain struct {
-	Domain    string
-	Subdomain string
-}
 type ResultOutput struct {
 	Domain string
 	Added  []string
 	Deled  []string
+	Code   map[string]int
 }
-
-func InsertNewFindMd5(fname string, fmd5 string) {
-	//@title InsertNewFindMd5:
-	//@param
-	//Return
-	redis.SetMd5InDB(fmd5)
-	redis.UpdateFileMd5(fname, fmd5)
-
+type CacheDomain struct {
+	Domain    string
+	Subdomain string
 }
 
 func formaturl(url string) (furl string) {
@@ -72,36 +58,6 @@ func aliveCheck(url string) (bool, int) {
 	}
 }
 
-func searchAndUpdateMd5() (newMonitorFiles []string) {
-	//@title searchAndUpdateMd5
-	//@param
-	//Return newMonitorFIles []string (Files changed during this check)
-	dirs := readconf.ReadMonitorDir()
-	var dirInfo []map[string]string
-	for _, dir := range dirs {
-		dirInfo = append(dirInfo, io.ReadFromDir(dir))
-		for _, finfos := range dirInfo {
-			for fname, fmd5 := range finfos {
-				fname = dir + "/" + fname
-				if redis.CheckMd5InDB(fmd5) {
-					// fmt.Println("\t[Info]Exists:", fname)
-					history_md5 := redis.SearchFileMd5(fname)
-					if history_md5 != fmd5 {
-						InsertNewFindMd5(fname, fmd5)
-						newMonitorFiles = append(newMonitorFiles, fname)
-					}
-				} else { //If fmd5 not in
-					// fmt.Println("\t[Info]Not Exists:", fname)
-					redis.UpdateFileMd5(fname, fmd5)
-					InsertNewFindMd5(fname, fmd5)
-					newMonitorFiles = append(newMonitorFiles, fname)
-				}
-			}
-		}
-	}
-
-	return
-}
 func difference(a, b []string) []string {
 	//@title difference
 	//@param
@@ -209,25 +165,34 @@ func scanSubdomain(domains []string) (resuts []ResultOutput) {
 	// upgradeSubdomainSQL(domain, subdomains)
 }
 
-func RunCheck(domains []string) map[string][]MonitorResult {
+func RunCheck(domains []string) (results map[string]ResultOutput) {
 	//@title RunCheck
 	//@param
 	//Return
 
 	var wg sync.WaitGroup
 	var mu sync.Mutex
-	res := make(map[string][]MonitorResult)
+	results = make(map[string]ResultOutput)
 	subdomainsCH := make(chan CacheDomain)
-	resultsCH := make(chan MonitorResult)
+	resultsCH := make(chan ResultOutput)
 
 	// Spawn worker goroutines
 	for i := 0; i < 100; i++ {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
+
 			for subdomainInfo := range subdomainsCH {
 				_, code := aliveCheck(subdomainInfo.Subdomain)
-				resultsCH <- MonitorResult{Domain: subdomainInfo.Domain, Subdomain: subdomainInfo.Subdomain, Code: code}
+				mu.Lock()
+				if entry, ok := results[subdomainInfo.Domain]; ok {
+					temp := map[string]int{}
+					temp[subdomainInfo.Subdomain] = code
+					entry.Code = temp
+					results[subdomainInfo.Domain] = entry
+				}
+				sqlite.AddMonitor(subdomainInfo.Domain, subdomainInfo.Subdomain, code)
+				mu.Unlock()
 			}
 		}()
 	}
@@ -236,6 +201,11 @@ func RunCheck(domains []string) map[string][]MonitorResult {
 	go func() {
 		for _, domain := range domains {
 			subdomains := strings.Split(cmd.FindStart(domain), "\n")
+			monitoredSub := sqlite.GetMonitoredSub(domain)
+			added, deled := get_changed(subdomains, monitoredSub)
+			mu.Lock()
+			results[domain] = ResultOutput{Domain: domain, Added: added, Deled: deled, Code: map[string]int{}}
+			mu.Unlock()
 			for _, subdomain := range subdomains {
 				subdomainsCH <- CacheDomain{Domain: domain, Subdomain: subdomain}
 			}
@@ -243,54 +213,43 @@ func RunCheck(domains []string) map[string][]MonitorResult {
 		close(subdomainsCH)
 	}()
 
-	// Collect results
-	go func() {
-		for result := range resultsCH {
-			mu.Lock()
-			if _, ok := res[result.Domain]; ok {
-				res[result.Domain] = append(res[result.Domain], result)
-			} else {
-				res[result.Domain] = []MonitorResult{result}
-			}
-
-			sqlite.AddMonitor(result.Domain, result.Subdomain, result.Code)
-			mu.Unlock()
-		}
-	}()
-
 	wg.Wait()
 	close(resultsCH)
-	return res
+	return
 }
 
 func main() {
-	var args args
+
+	// var results []ResultOutput
+
 	if err := logutil.Init(); err != nil {
 		logutil.Logf("Failed to initialize logger: %v", err)
 	}
 
+	var args args
 	arg.MustParse(&args)
 
+	// 检查监控对象，查看是否有新增监控对象，并对新增监控对象进行子域名查询/更新
 	if args.UPDATE {
-		files := searchAndUpdateMd5()
+		files := io.SearchAndUpdateMd5()
 		fmt.Printf("\t[Info]New find in files: %v", files)
 		for _, file := range files {
 			fmt.Println(file)
 			lines := io.ReadFileContent(file)
 			results := scanSubdomain(lines)
 			for _, item := range results {
+				fmt.Println(item)
 				fmt.Printf("\n[INFO] Domain:%v, \n\t[+]number of new subdomains:%v \n\t[-]reduce the number of subdomains: %v", item.Domain, len(item.Added), len(item.Deled))
 			}
 		}
 	}
+	// 运行sqlite内记录的域名，查看是否有子域名更新
 	if args.RUN {
 		domains := sqlite.Getdomains()
-		runResult := RunCheck(domains)
-		keys := make([]string, 0, len(runResult))
-		for k := range runResult {
-			keys = append(keys, k)
+		results := RunCheck(domains)
+		for _, item := range results {
+			fmt.Printf("\n[INFO] Domain:%v, \n\t[+]number of new subdomains:%v \n\t[-]reduce the number of subdomains: %v", item.Domain, len(item.Added), len(item.Deled))
 		}
-		fmt.Printf("[INFO] %v domain was updated", len(keys))
 
 	}
 	if args.OUTPUT != nil {
