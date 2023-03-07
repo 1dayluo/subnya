@@ -6,6 +6,7 @@ import (
 	sqlite "DomainMonitor/pkg/db"
 	"DomainMonitor/pkg/io"
 	"DomainMonitor/pkg/logutil"
+	"DomainMonitor/pkg/output"
 	"fmt"
 	"net/http"
 	"strings"
@@ -16,19 +17,13 @@ import (
 
 type args struct {
 	// -u 查找文件md5的更新，有更新则会单独跑一次数据
-	// -r 对数据库内的监控文件进行内容读取，并查找每个域名下可能的子域名。（最后存储到数据库中/验活）
+	// -r 对数据库内的监控文件进行内容读取(不会对文件的更新进行追踪），并查找每个域名下可能的子域名。（最后存储到数据库中/验活）
 	// -output 输出本次更新统计结果的文件|默认输出在终端下
 	UPDATE bool     `arg:"-u,--update" help:"Check update in monitor"`
 	RUN    bool     `arg:"-r,--run" help:"start subdomain finder and update data(include response status code) in sqlite"`
 	OUTPUT []string `arg:"--output"`
 }
 
-type ResultOutput struct {
-	Domain string
-	Added  []string
-	Deled  []string
-	Code   map[string]int
-}
 type CacheDomain struct {
 	Domain    string
 	Subdomain string
@@ -120,12 +115,13 @@ func upgradeDelSubdomainSQL(domain string, subdomains []string) {
 		sqlite.DeleteMonitor(domain, subdomain, -1)
 	}
 }
-func scanSubdomain(domains []string) (resuts []ResultOutput) {
+func scanSubdomain(domains []string) (results map[string]output.ResultOutput) {
 	//@title scanSubdomain
 	//@param
 	//Return
 	var wg sync.WaitGroup
 	var mu sync.Mutex
+	results = make(map[string]output.ResultOutput)
 	domainCH := make(chan string)
 
 	for i := 0; i < 10; i++ {
@@ -141,13 +137,15 @@ func scanSubdomain(domains []string) (resuts []ResultOutput) {
 				if added != nil {
 					mu.Lock()
 					upgradeAddSubdomainSQL(domain, subdomains)
-					resuts = append(resuts, ResultOutput{Domain: domain, Added: subdomains, Deled: nil})
+					results[domain] = output.ResultOutput{All: subdomains, Added: subdomains, Deled: nil}
+					// resuts = append(resuts, ResultOutput{Domain: domain, Added: subdomains, Deled: nil})
 					mu.Unlock()
 				}
 				if deled != nil {
 					mu.Lock()
 					upgradeDelSubdomainSQL(domain, subdomains)
-					resuts = append(resuts, ResultOutput{Domain: domain, Added: nil, Deled: subdomains})
+					results[domain] = output.ResultOutput{All: subdomains, Added: nil, Deled: subdomains}
+					// resuts = append(resuts, ResultOutput{Domain: domain, Added: nil, Deled: subdomains})
 					mu.Unlock()
 				}
 			}
@@ -165,16 +163,16 @@ func scanSubdomain(domains []string) (resuts []ResultOutput) {
 	// upgradeSubdomainSQL(domain, subdomains)
 }
 
-func RunCheck(domains []string) (results map[string]ResultOutput) {
+func RunCheck(domains []string) (results map[string]output.ResultOutput) {
 	//@title RunCheck
 	//@param
 	//Return
 
 	var wg sync.WaitGroup
 	var mu sync.Mutex
-	results = make(map[string]ResultOutput)
+	results = make(map[string]output.ResultOutput)
 	subdomainsCH := make(chan CacheDomain)
-	resultsCH := make(chan ResultOutput)
+	resultsCH := make(chan output.ResultOutput)
 
 	// Spawn worker goroutines
 	for i := 0; i < 100; i++ {
@@ -185,12 +183,7 @@ func RunCheck(domains []string) (results map[string]ResultOutput) {
 			for subdomainInfo := range subdomainsCH {
 				_, code := aliveCheck(subdomainInfo.Subdomain)
 				mu.Lock()
-				if entry, ok := results[subdomainInfo.Domain]; ok {
-					temp := map[string]int{}
-					temp[subdomainInfo.Subdomain] = code
-					entry.Code = temp
-					results[subdomainInfo.Domain] = entry
-				}
+				results[subdomainInfo.Domain].Code[subdomainInfo.Subdomain] = code
 				sqlite.AddMonitor(subdomainInfo.Domain, subdomainInfo.Subdomain, code)
 				mu.Unlock()
 			}
@@ -204,7 +197,7 @@ func RunCheck(domains []string) (results map[string]ResultOutput) {
 			monitoredSub := sqlite.GetMonitoredSub(domain)
 			added, deled := get_changed(subdomains, monitoredSub)
 			mu.Lock()
-			results[domain] = ResultOutput{Domain: domain, Added: added, Deled: deled, Code: map[string]int{}}
+			results[domain] = output.ResultOutput{All: subdomains, Added: added, Deled: deled, Code: map[string]int{}}
 			mu.Unlock()
 			for _, subdomain := range subdomains {
 				subdomainsCH <- CacheDomain{Domain: domain, Subdomain: subdomain}
@@ -232,28 +225,29 @@ func main() {
 	// 检查监控对象，查看是否有新增监控对象，并对新增监控对象进行子域名查询/更新
 	if args.UPDATE {
 		files := io.SearchAndUpdateMd5()
-		fmt.Printf("\t[Info]New find in files: %v", files)
+		fmt.Printf("[Info]New find in files: %v", files)
 		for _, file := range files {
-			fmt.Println(file)
 			lines := io.ReadFileContent(file)
-			results := scanSubdomain(lines)
-			for _, item := range results {
-				fmt.Println(item)
-				fmt.Printf("\n[INFO] Domain:%v, \n\t[+]number of new subdomains:%v \n\t[-]reduce the number of subdomains: %v", item.Domain, len(item.Added), len(item.Deled))
-			}
+			scanSubdomain(lines)
+			// for _, item := range results {
+			// 	fmt.Printf("\n[INFO] Domain:%v, \n\t[+]number of new subdomains:%v \n\t[-]reduce the number of subdomains: %v", item.Domain, len(item.Added), len(item.Deled))
+			// }
 		}
 	}
 	// 运行sqlite内记录的域名，查看是否有子域名更新
 	if args.RUN {
 		domains := sqlite.Getdomains()
 		results := RunCheck(domains)
-		for _, item := range results {
-			fmt.Printf("\n[INFO] Domain:%v, \n\t[+]number of new subdomains:%v \n\t[-]reduce the number of subdomains: %v", item.Domain, len(item.Added), len(item.Deled))
-		}
+		output.OutResult(results)
+		// for _, item := range results {
+		// 	fmt.Printf("\n[INFO] Domain:%v, \n\t[+]number of new subdomains:%v \n\t[-]reduce the number of subdomains: %v", item.Domain, len(item.Added), len(item.Deled))
+		// }
 
 	}
 	if args.OUTPUT != nil {
 		fmt.Println("some code")
 	}
+
+	// output.OutResult(test)
 
 }
