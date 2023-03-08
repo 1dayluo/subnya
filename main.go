@@ -1,3 +1,8 @@
+/*
+ * @Author: 1dayluo
+ * @Date: 2023-02-08 09:55:51
+ * @LastEditTime: 2023-03-08 09:03:10
+ */
 package main
 
 import (
@@ -9,6 +14,7 @@ import (
 	"DomainMonitor/pkg/output"
 	"fmt"
 	"net/http"
+	"os"
 	"strings"
 	"sync"
 
@@ -19,9 +25,9 @@ type args struct {
 	// -u 查找文件md5的更新，有更新则会单独跑一次数据
 	// -r 对数据库内的监控文件进行内容读取(不会对文件的更新进行追踪），并查找每个域名下可能的子域名。（最后存储到数据库中/验活）
 	// -output 输出本次更新统计结果的文件|默认输出在终端下
-	UPDATE bool     `arg:"-u,--update" help:"Check update in monitor"`
-	RUN    bool     `arg:"-r,--run" help:"start subdomain finder and update data(include response status code) in sqlite"`
-	OUTPUT []string `arg:"--output"`
+	UPDATE bool `arg:"-u,--update" help:"Check update in monitor"`
+	RUN    bool `arg:"-r,--run" help:"start subdomain finder and update data(include response status code) in sqlite"`
+	OUT    bool `arg:"--output" helo:"output to file defined in default settings`
 }
 
 type CacheDomain struct {
@@ -30,6 +36,10 @@ type CacheDomain struct {
 }
 
 func formaturl(url string) (furl string) {
+	/**
+	 * @description: format url
+	 * @return {*}
+	 */
 	domain := strings.Split(url, "//")
 	if len(domain) == 1 {
 		furl = "http://" + strings.Join(domain, "")
@@ -39,9 +49,10 @@ func formaturl(url string) (furl string) {
 	return
 }
 func aliveCheck(url string) (bool, int) {
-	//@title aliveCheck
-	//@param
-	//Return bool
+	/**
+	 * @description: send requests to url,and check response code
+	 * @return {*}
+	 */
 	// timeout := time.Duration(2*time.Second)
 	url = formaturl(url)
 	resp, err := http.Get(url)
@@ -54,9 +65,10 @@ func aliveCheck(url string) (bool, int) {
 }
 
 func difference(a, b []string) []string {
-	//@title difference
-	//@param
-	//Return
+	/**
+	 * @description: Compare the difference between a and b, and return as a slice
+	 * @return {*}
+	 */
 	mb := make(map[string]struct{}, len(b))
 	for _, x := range b {
 		mb[x] = struct{}{}
@@ -70,6 +82,10 @@ func difference(a, b []string) []string {
 	return diff
 }
 func intersect(slice1, slice2 []string) []string {
+	/**
+	 * @description: Find out the same element between a and b, and return it as a slice
+	 * @return {*}
+	 */
 	var intersect []string
 	for _, element1 := range slice1 {
 		for _, element2 := range slice2 {
@@ -81,9 +97,10 @@ func intersect(slice1, slice2 []string) []string {
 	return intersect //return slice after intersection
 }
 func get_changed(return_domains, db_domains []string) (added_domains []string, deled_domains []string) {
-	//@title get_changed
-	//@param
-	//Return
+	/**
+	 * @description: Compare return_domains with the domains in the database to find out the new and reduced parts relative to the data in the database
+	 * @return {*}
+	 */
 	same_domain := intersect(return_domains, db_domains)
 	if len(return_domains) > len(db_domains) {
 		added_domains = difference(return_domains, same_domain)
@@ -95,9 +112,10 @@ func get_changed(return_domains, db_domains []string) (added_domains []string, d
 
 }
 func upgradeAddSubdomainSQL(domain string, subdomains []string) {
-	//@title insertFinder
-	//@param
-	//Return
+	/**
+	 * @description: Update the newly added subdomain  detected under the domain  to the database
+	 * @return {*}
+	 */
 	for _, subdomain := range subdomains {
 		// res, code := aliveCheck(subdomain)
 		// fmt.Println(res, code, subdomain)
@@ -106,19 +124,21 @@ func upgradeAddSubdomainSQL(domain string, subdomains []string) {
 }
 
 func upgradeDelSubdomainSQL(domain string, subdomains []string) {
-	//@title insertFinder
-	//@param
-	//Return
+	/**
+	 * @description: Update the detected reduced subdomain  under the domain  to the database
+	 * @return {*}
+	 */
 	for _, subdomain := range subdomains {
 		// res, code := aliveCheck(subdomain)
 		// fmt.Println(res, code, subdomain)
 		sqlite.DeleteMonitor(domain, subdomain, -1)
 	}
 }
-func scanSubdomain(domains []string) (results map[string]output.ResultOutput) {
-	//@title scanSubdomain
-	//@param
-	//Return
+func Update(domains []string) (results map[string]output.ResultOutput) {
+	/**
+	 * @description: Update the subdomain under the domain
+	 * @return {*}
+	 */
 	var wg sync.WaitGroup
 	var mu sync.Mutex
 	results = make(map[string]output.ResultOutput)
@@ -159,14 +179,14 @@ func scanSubdomain(domains []string) (results map[string]output.ResultOutput) {
 	close(domainCH)
 	wg.Wait()
 	return
-	// get_changed(subdomains, monitored_domains)
-	// upgradeSubdomainSQL(domain, subdomains)
+
 }
 
-func RunCheck(domains []string) (results map[string]output.ResultOutput) {
-	//@title RunCheck
-	//@param
-	//Return
+func UpdateAndCheck(domains []string) (results map[string]output.ResultOutput) {
+	/**
+	 * @description: Update the subdomain under the domain and check its response code
+	 * @return {*}
+	 */
 
 	var wg sync.WaitGroup
 	var mu sync.Mutex
@@ -213,11 +233,10 @@ func RunCheck(domains []string) (results map[string]output.ResultOutput) {
 
 func main() {
 
-	// var results []ResultOutput
-
 	if err := logutil.Init(); err != nil {
 		logutil.Logf("Failed to initialize logger: %v", err)
 	}
+	var results map[string]output.ResultOutput
 
 	var args args
 	arg.MustParse(&args)
@@ -228,24 +247,25 @@ func main() {
 		fmt.Printf("[Info]New find in files: %v", files)
 		for _, file := range files {
 			lines := io.ReadFileContent(file)
-			scanSubdomain(lines)
-			// for _, item := range results {
-			// 	fmt.Printf("\n[INFO] Domain:%v, \n\t[+]number of new subdomains:%v \n\t[-]reduce the number of subdomains: %v", item.Domain, len(item.Added), len(item.Deled))
-			// }
+			// TODO: 检查取消监控的域名
+			results = Update(lines)
+			output.OutResult(results, os.Stdout, true)
 		}
 	}
 	// 运行sqlite内记录的域名，查看是否有子域名更新
 	if args.RUN {
 		domains := sqlite.Getdomains()
-		results := RunCheck(domains)
-		output.OutResult(results)
-		// for _, item := range results {
-		// 	fmt.Printf("\n[INFO] Domain:%v, \n\t[+]number of new subdomains:%v \n\t[-]reduce the number of subdomains: %v", item.Domain, len(item.Added), len(item.Deled))
-		// }
+		results = UpdateAndCheck(domains)
+		output.OutResult(results, os.Stdout, true)
 
 	}
-	if args.OUTPUT != nil {
-		fmt.Println("some code")
+	if args.OUT {
+		fmt.Println(output.OutFile)
+		file, err := os.Create(output.OutFile)
+		if err != nil {
+			logutil.Logf("Output failed: %v", err)
+		}
+		output.OutResult(results, file, false)
 	}
 
 	// output.OutResult(test)

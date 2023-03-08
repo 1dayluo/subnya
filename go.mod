@@ -4,6 +4,7 @@ go 1.19
 
 require (
 	github.com/alexflint/go-arg v1.4.3
+	github.com/fatih/color v1.14.1
 	github.com/mattn/go-sqlite3 v1.14.16
 	github.com/projectdiscovery/subfinder/v2 v2.5.5
 	github.com/redis/go-redis/v9 v9.0.2
@@ -28,6 +29,8 @@ require (
 	github.com/lib/pq v1.10.7 // indirect
 	github.com/logrusorgru/aurora v2.0.3+incompatible // indirect
 	github.com/magiconair/properties v1.8.7 // indirect
+	github.com/mattn/go-colorable v0.1.13 // indirect
+	github.com/mattn/go-isatty v0.0.17 // indirect
 	github.com/mholt/archiver v3.1.1+incompatible // indirect
 	github.com/microcosm-cc/bluemonday v1.0.21 // indirect
 	github.com/miekg/dns v1.1.50 // indirect
