@@ -1,10 +1,12 @@
 <!--
  * @Author: 1dayluo
  * @Date: 2023-02-07 11:18:40
- * @LastEditTime: 2023-03-08 09:30:35
+ * @LastEditTime: 2023-03-08 17:36:56
 -->
 # SubNya_monitor
 ## <div align="center"><b><a href="README.md">English</a> | <a href="README_CN.md">简体中文</a></b></div>
+
+![](https://img.shields.io/github/commit-activity/w/1dayluo/SubNya_monitor?style=flat-square)    ![](https://img.shields.io/github/license/1dayluo/SubNya_monitor?style=flat-square) 
 
 ## Introduction
 
