@@ -1,7 +1,7 @@
 <!--
  * @Author: 1dayluo
  * @Date: 2023-02-07 11:18:40
- * @LastEditTime: 2023-03-08 07:51:47
+ * @LastEditTime: 2023-03-08 09:30:35
 -->
 # SubNya_monitor
 ## <div align="center"><b><a href="README.md">English</a> | <a href="README_CN.md">简体中文</a></b></div>
@@ -62,7 +62,7 @@ Options:
 1. Implement the output traversal result function and confirm the output format.
 2. ~~Optimize error handling and record errors in logs.~~
 3. Design notification function to ensure that newly added subdomains can be notified to users.
-4. Beautify console output.
+4. ~~Beautify console output.~~
 5. Set up scheduled tasks and corresponding configuration files.
 6. Optimize threading, use proxies or other details, etc.
 7. ~~English Readme document.~~

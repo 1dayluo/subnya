@@ -1,7 +1,7 @@
 /*
  * @Author: 1dayluo
  * @Date: 2023-03-01 15:01:31
- * @LastEditTime: 2023-03-08 09:06:24
+ * @LastEditTime: 2023-03-08 09:29:46
  */
 package output
 
@@ -22,6 +22,39 @@ type ResultOutput struct {
 }
 
 var OutFile = readconf.ReadSettingsConfig("outfile") + "/" + time.Now().Format("2006-01-02")
+
+const (
+	logo = `
+
+
+    ███████ ██    ██ ██████  ███    ██ ██    ██  █████  ███    ███  ██████  ███    ██ ██ ████████  ██████  ██████      
+    ██      ██    ██ ██   ██ ████   ██  ██  ██  ██   ██ ████  ████ ██    ██ ████   ██ ██    ██    ██    ██ ██   ██     
+    ███████ ██    ██ ██████  ██ ██  ██   ████   ███████ ██ ████ ██ ██    ██ ██ ██  ██ ██    ██    ██    ██ ██████      
+         ██ ██    ██ ██   ██ ██  ██ ██    ██    ██   ██ ██  ██  ██ ██    ██ ██  ██ ██ ██    ██    ██    ██ ██   ██     
+    ███████  ██████  ██████  ██   ████    ██    ██   ██ ██      ██  ██████  ██   ████ ██    ██     ██████  ██   ██     
+                                                                                                                       
+                                                                                                                       
+
+					Subdomain Monitoring
+	  		A tool for monitoring subdomain changes on target domain
+			  	Author: @1dayluo(https://github.com/1dayluo)
+	--------------------------------------------------------------------------------------------------------------
+										`
+	usage = `
+Usage: subnya_monitor [options]
+
+Options:
+	--update, -u           Check update in monitor
+	--run, -r              start subdomain finder and update data(include response status code) in sqlite
+	--output			   output to file defined in default settings
+	--help, -h             display this help and exit
+`
+)
+
+func PrintLogo() {
+	magenta := color.New(color.FgHiMagenta).SprintFunc()
+	fmt.Println(magenta(logo))
+}
 
 func print(out io.Writer, format string, args ...interface{}) {
 	fmt.Fprintf(out, format, args...)

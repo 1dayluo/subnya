@@ -1,7 +1,7 @@
 /*
  * @Author: 1dayluo
  * @Date: 2023-02-08 09:55:51
- * @LastEditTime: 2023-03-08 09:03:10
+ * @LastEditTime: 2023-03-08 09:29:28
  */
 package main
 
@@ -240,11 +240,12 @@ func main() {
 
 	var args args
 	arg.MustParse(&args)
+	output.PrintLogo()
 
 	// 检查监控对象，查看是否有新增监控对象，并对新增监控对象进行子域名查询/更新
 	if args.UPDATE {
 		files := io.SearchAndUpdateMd5()
-		fmt.Printf("[Info]New find in files: %v", files)
+		fmt.Printf("[*]New find in files: %v", files)
 		for _, file := range files {
 			lines := io.ReadFileContent(file)
 			// TODO: 检查取消监控的域名
@@ -263,7 +264,7 @@ func main() {
 		fmt.Println(output.OutFile)
 		file, err := os.Create(output.OutFile)
 		if err != nil {
-			logutil.Logf("Output failed: %v", err)
+			logutil.Logf("[ERR]Output failed: %v", err)
 		}
 		output.OutResult(results, file, false)
 	}
