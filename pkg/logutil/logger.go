@@ -1,10 +1,16 @@
+/*
+ * @Author: 1dayluo
+ * @Date: 2023-03-02 20:50:18
+ * @LastEditTime: 2023-03-10 19:32:06
+ */
 // logger.go
 package logutil
 
 import (
-	"DomainMonitor/pkg/readconf"
 	"log"
 	"os"
+
+	"github.com/1dayluo/subnya/pkg/readconf"
 )
 
 var (

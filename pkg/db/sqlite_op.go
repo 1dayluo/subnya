@@ -2,11 +2,12 @@
 package db
 
 import (
-	"DomainMonitor/pkg/logutil"
-	"DomainMonitor/pkg/readconf"
 	"database/sql"
 	"fmt"
 	"time"
+
+	"github.com/1dayluo/subnya/pkg/logutil"
+	"github.com/1dayluo/subnya/pkg/readconf"
 
 	_ "github.com/mattn/go-sqlite3"
 )

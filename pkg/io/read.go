@@ -1,14 +1,20 @@
+/*
+ * @Author: 1dayluo
+ * @Date: 2023-02-10 07:08:03
+ * @LastEditTime: 2023-03-10 19:31:24
+ */
 package io
 
 import (
-	"DomainMonitor/pkg/db"
-	"DomainMonitor/pkg/readconf"
 	"bufio"
 	"crypto/md5"
 	"fmt"
 	"io/ioutil"
 	"log"
 	"os"
+
+	"github.com/1dayluo/subnya/pkg/db"
+	"github.com/1dayluo/subnya/pkg/readconf"
 )
 
 func ReadFromDir(dirname string) map[string]string {

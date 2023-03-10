@@ -1,22 +1,23 @@
 /*
  * @Author: 1dayluo
  * @Date: 2023-02-08 09:55:51
- * @LastEditTime: 2023-03-08 09:29:28
+ * @LastEditTime: 2023-03-10 19:18:13
  */
 package main
 
 import (
-	"DomainMonitor/pkg/cmd"
+	"github.com/1dayluo/subnya/pkg/cmd"
 	// redis "DomainMonitor/pkg/db"
-	sqlite "DomainMonitor/pkg/db"
-	"DomainMonitor/pkg/io"
-	"DomainMonitor/pkg/logutil"
-	"DomainMonitor/pkg/output"
 	"fmt"
 	"net/http"
 	"os"
 	"strings"
 	"sync"
+
+	sqlite "github.com/1dayluo/subnya/pkg/db"
+	"github.com/1dayluo/subnya/pkg/io"
+	"github.com/1dayluo/subnya/pkg/logutil"
+	"github.com/1dayluo/subnya/pkg/output"
 
 	"github.com/alexflint/go-arg"
 )

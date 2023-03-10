@@ -1,12 +1,18 @@
+/*
+ * @Author: 1dayluo
+ * @Date: 2023-02-19 14:03:48
+ * @LastEditTime: 2023-03-10 19:30:36
+ */
 package cmd
 
 import (
-	"DomainMonitor/pkg/readconf"
 	"bytes"
 	"fmt"
 	"io"
 	"log"
 	"strconv"
+
+	"github.com/1dayluo/subnya/pkg/readconf"
 
 	"github.com/projectdiscovery/subfinder/v2/pkg/resolve"
 	"github.com/projectdiscovery/subfinder/v2/pkg/runner"

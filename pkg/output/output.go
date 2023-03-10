@@ -1,15 +1,16 @@
 /*
  * @Author: 1dayluo
  * @Date: 2023-03-01 15:01:31
- * @LastEditTime: 2023-03-08 09:29:46
+ * @LastEditTime: 2023-03-10 19:32:12
  */
 package output
 
 import (
-	"DomainMonitor/pkg/readconf"
 	"fmt"
 	"io"
 	"time"
+
+	"github.com/1dayluo/subnya/pkg/readconf"
 
 	"github.com/fatih/color"
 )

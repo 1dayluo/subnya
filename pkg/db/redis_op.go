@@ -2,12 +2,13 @@
 package db
 
 import (
-	"DomainMonitor/pkg/logutil"
-	"DomainMonitor/pkg/readconf"
 	"context"
 	"fmt"
 	"strconv"
 	"time"
+
+	"github.com/1dayluo/subnya/pkg/logutil"
+	"github.com/1dayluo/subnya/pkg/readconf"
 
 	"github.com/redis/go-redis/v9"
 )
