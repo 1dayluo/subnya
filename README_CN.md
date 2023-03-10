@@ -21,6 +21,18 @@
 - 内置子域名搜集/扩展，使用subfinder进行查询子域名
 
 
+## 下载
+
+### release
+
+ 你可以直接从[releases](https://github.com/1dayluo/SubNya_monitor/releases/tag/v1.0) 下载对应的二进制文件（subymonitor文件）.
+
+### using go install 
+如果你已经有go所需的必要环境，请使用以下命令 (至少go 1.19),
+```lua
+
+
+```
 
 ## 配置文件介绍
 
