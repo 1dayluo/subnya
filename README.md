@@ -1,9 +1,9 @@
 <!--
  * @Author: 1dayluo
  * @Date: 2023-02-07 11:18:40
- * @LastEditTime: 2023-03-08 17:36:56
+ * @LastEditTime: 2023-03-10 19:38:43
 -->
-# SubNya_monitor
+# SubNya
 ## <div align="center"><b><a href="README.md">English</a> | <a href="README_CN.md">简体中文</a></b></div>
 
 ![](https://img.shields.io/github/commit-activity/w/1dayluo/SubNya_monitor?style=flat-square)    ![](https://img.shields.io/github/license/1dayluo/SubNya_monitor?style=flat-square) 
@@ -12,13 +12,20 @@
 
 SubNya_monitor is a new subdomain enumeration and monitoring tool used to track the status of subdomains on the target domain, including newly added and removed subdomains. It utilizes goroutine to increase the speed of subdomain enumeration. The tool stores data in both Redis and SQLite, taking advantage of Redis's speed to monitor changes in file MD5, and SQLite's features to store and update subdomain data, including the use of transactions. Finally, the output result will be saved to a local file record (optional) or sent as a notification to a personal Telegram/email via an API.
 
-The current project has completed its basic functionality, and other functions and the Dockerfile are still under development (see todo below). The original plan included the following:
+The current project has completed its basic functionality, and other functions and the Dockerfile are still under development (see todo below). 
 
-- Provide interfaces and demos of different instant messaging tools to notify users of newly discovered subdomains.
-- Set up scheduled tasks to periodically query new subdomains.
-- Support periodic monitoring of folders and command line input.
-- Newly added subdomains will be sent to the message queue, and users can customize which applications they want to be notified.
-- Built-in subdomain collection/extension using subfinder to query subdomains.
+## Easy installation
+### release
+
+ you can download them from the [releases](https://github.com/1dayluo/SubNya_monitor/releases/tag/v1.0) page.
+
+### using go install 
+If you have a Go environment ready to go (at least go 1.19), it's as easy as:
+```lua
+go install  github.com/1dayluo/subnya@latest  
+
+```
+   
 
 ## Configuration File
 
@@ -59,15 +66,7 @@ Options:
 
 
 
-## TODO:
 
-1. Implement the output traversal result function and confirm the output format.
-2. ~~Optimize error handling and record errors in logs.~~
-3. Design notification function to ensure that newly added subdomains can be notified to users.
-4. ~~Beautify console output.~~
-5. Set up scheduled tasks and corresponding configuration files.
-6. Optimize threading, use proxies or other details, etc.
-7. ~~English Readme document.~~
 
 
 
