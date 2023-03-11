@@ -9,7 +9,7 @@ monitor:
     threads : 10
     maxenumerationtime: 10
     outdir : "./output"
-    logfile: "./log/"
+    logdir: "./log/"
   
   
 redis:

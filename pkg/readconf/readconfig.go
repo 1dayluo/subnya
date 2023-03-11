@@ -1,7 +1,7 @@
 /*
  * @Author: 1dayluo
  * @Date: 2023-02-10 10:50:17
- * @LastEditTime: 2023-03-11 21:47:08
+ * @LastEditTime: 2023-03-11 22:06:55
  */
 package readconf
 
@@ -16,17 +16,24 @@ import (
 var configPath = "./config"
 
 func init() {
-	homedir, _ := os.UserHomeDir()
-	configPath = fmt.Sprintf("%v/.config/subnya/", homedir)
-	os.MkdirAll(configPath, os.ModePerm)
-	ioutil.ReadFile("./config/config.yml")
-	bytesRead, err := ioutil.ReadFile("./config/config.yml")
-	if err != nil {
-		panic(err)
-	}
-	err = ioutil.WriteFile(configPath+"config.yml", bytesRead, 0644)
-	if err != nil {
-		panic(err)
+	/**
+	 * @description: Update the subdomain under the domain and check its response code
+	 * @return {*}
+	 */
+
+	if _, err := os.Stat(configPath); err != nil {
+		homedir, _ := os.UserHomeDir()
+		configPath = fmt.Sprintf("%v/.config/subnya/", homedir)
+		os.MkdirAll(configPath, os.ModePerm)
+		ioutil.ReadFile("./config/config.yml")
+		bytesRead, err := ioutil.ReadFile("./config/config.yml")
+		if err != nil {
+			panic(err)
+		}
+		err = ioutil.WriteFile(configPath+"config.yml", bytesRead, 0644)
+		if err != nil {
+			panic(err)
+		}
 	}
 }
 func ReadMonitorDir() []string {

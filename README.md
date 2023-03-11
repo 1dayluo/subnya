@@ -1,7 +1,7 @@
 <!--
  * @Author: 1dayluo
  * @Date: 2023-02-07 11:18:40
- * @LastEditTime: 2023-03-10 19:38:43
+ * @LastEditTime: 2023-03-11 22:03:55
 -->
 # SubNya
 ## <div align="center"><b><a href="README.md">English</a> | <a href="README_CN.md">简体中文</a></b></div>
@@ -29,7 +29,7 @@ go install  github.com/1dayluo/subnya@latest
 
 ## Configuration File
 
-The configuration file is located in `./config/config.yml` and looks like this:
+The configuration file is located in  `~/.config/subnya/config/config.yml` and looks like this，Executable files need to fill in the absolute path:
 
 ```yml
 schedule:

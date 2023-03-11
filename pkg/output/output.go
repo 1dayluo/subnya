@@ -1,13 +1,14 @@
 /*
  * @Author: 1dayluo
  * @Date: 2023-03-01 15:01:31
- * @LastEditTime: 2023-03-10 19:32:12
+ * @LastEditTime: 2023-03-11 22:09:32
  */
 package output
 
 import (
 	"fmt"
 	"io"
+	"os"
 	"time"
 
 	"github.com/1dayluo/subnya/pkg/readconf"
@@ -52,6 +53,9 @@ Options:
 `
 )
 
+func init() {
+	os.MkdirAll(readconf.ReadSettingsConfig("outdir"), os.ModePerm)
+}
 func PrintLogo() {
 	magenta := color.New(color.FgHiMagenta).SprintFunc()
 	fmt.Println(magenta(logo))

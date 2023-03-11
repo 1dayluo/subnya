@@ -1,4 +1,4 @@
-# SubNya_monitor
+# SubNya
 
 
 
@@ -30,9 +30,10 @@
 ### using go install 
 如果你已经有go所需的必要环境，请使用以下命令 (至少go 1.19),
 ```lua
-
+go install  github.com/1dayluo/subnya@latest  
 
 ```
+   
 
 ## 配置文件介绍
 
