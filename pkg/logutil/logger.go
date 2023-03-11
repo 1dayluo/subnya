@@ -1,12 +1,13 @@
 /*
  * @Author: 1dayluo
  * @Date: 2023-03-02 20:50:18
- * @LastEditTime: 2023-03-11 21:53:30
+ * @LastEditTime: 2023-03-11 23:14:22
  */
 // logger.go
 package logutil
 
 import (
+	"fmt"
 	"log"
 	"os"
 
@@ -32,6 +33,12 @@ func Logf(format string, v ...interface{}) {
 func Init() error {
 	// savePath := readconf.ReadSettingsConfig("logfile") + time.Now().Format("2006-01-02") + ".log"
 	savePath := readconf.ReadSettingsConfig("logdir") + "monitor_run.log"
+	if _, err := os.Stat(savePath); os.IsNotExist(err) {
+		homedir, _ := os.UserHomeDir()
+		logPath := fmt.Sprintf("%v/.config/subnya/log", homedir)
+		logPath = readconf.SetSettingsConfig("logdir", logPath)
+		os.MkdirAll(logPath, os.ModePerm)
+	}
 	logger, err := NewFileLogger(savePath)
 	if err != nil {
 		return err

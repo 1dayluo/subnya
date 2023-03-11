@@ -1,7 +1,7 @@
 /*
  * @Author: 1dayluo
  * @Date: 2023-03-01 15:01:31
- * @LastEditTime: 2023-03-11 22:09:32
+ * @LastEditTime: 2023-03-11 23:13:59
  */
 package output
 
@@ -28,7 +28,6 @@ var OutFile = readconf.ReadSettingsConfig("outfile") + "/" + time.Now().Format("
 const (
 	logo = `
 
-
     ███████ ██    ██ ██████  ███    ██ ██    ██  █████  ███    ███  ██████  ███    ██ ██ ████████  ██████  ██████      
     ██      ██    ██ ██   ██ ████   ██  ██  ██  ██   ██ ████  ████ ██    ██ ████   ██ ██    ██    ██    ██ ██   ██     
     ███████ ██    ██ ██████  ██ ██  ██   ████   ███████ ██ ████ ██ ██    ██ ██ ██  ██ ██    ██    ██    ██ ██████      
@@ -40,8 +39,9 @@ const (
 					Subdomain Monitoring
 	  		A tool for monitoring subdomain changes on target domain
 			  	Author: @1dayluo(https://github.com/1dayluo)
-	--------------------------------------------------------------------------------------------------------------
-										`
+	        ------------------------------------------------------
+	`
+
 	usage = `
 Usage: subnya_monitor [options]
 
@@ -55,10 +55,14 @@ Options:
 
 func init() {
 	os.MkdirAll(readconf.ReadSettingsConfig("outdir"), os.ModePerm)
+
 }
 func PrintLogo() {
 	magenta := color.New(color.FgHiMagenta).SprintFunc()
 	fmt.Println(magenta(logo))
+	otherInfo := `Config file path :%s
+Output path: %s`
+	fmt.Println(magenta(fmt.Sprintf(otherInfo, readconf.ConfigPath, OutFile)))
 }
 
 func print(out io.Writer, format string, args ...interface{}) {

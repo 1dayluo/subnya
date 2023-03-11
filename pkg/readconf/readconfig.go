@@ -1,40 +1,51 @@
 /*
  * @Author: 1dayluo
  * @Date: 2023-02-10 10:50:17
- * @LastEditTime: 2023-03-11 22:06:55
+ * @LastEditTime: 2023-03-11 23:03:31
  */
 package readconf
 
 import (
 	"fmt"
-	"io/ioutil"
+	"io"
+	"net/http"
 	"os"
 
 	"github.com/spf13/viper"
 )
 
-var configPath = "./config"
+var ConfigPath = "./config"
+var downloadSamplePath = "https://raw.githubusercontent.com/1dayluo/subnya/master/config/config.yml"
 
 func init() {
 	/**
 	 * @description: Update the subdomain under the domain and check its response code
 	 * @return {*}
 	 */
-
-	if _, err := os.Stat(configPath); err != nil {
+	configFile := "config.yml"
+	if _, err := os.Stat(ConfigPath); os.IsNotExist(err) {
 		homedir, _ := os.UserHomeDir()
-		configPath = fmt.Sprintf("%v/.config/subnya/", homedir)
-		os.MkdirAll(configPath, os.ModePerm)
-		ioutil.ReadFile("./config/config.yml")
-		bytesRead, err := ioutil.ReadFile("./config/config.yml")
+		ConfigPath = fmt.Sprintf("%v/.config/subnya/", homedir)
+		// get response from github
+		response, err := http.Get(downloadSamplePath)
 		if err != nil {
-			panic(err)
+			fmt.Println("[*]error,can not download sample config path!")
 		}
-		err = ioutil.WriteFile(configPath+"config.yml", bytesRead, 0644)
+		defer response.Body.Close()
+		// Create file
+		file, err := os.Create(ConfigPath + configFile)
 		if err != nil {
-			panic(err)
+			fmt.Println("[ERR]read config file failed!", err)
 		}
+		defer file.Close()
+		// Copy response text to file
+		_, err = io.Copy(file, response.Body)
+		if err != nil {
+			fmt.Println("[ERR]read config file failed!", err)
+		}
+
 	}
+
 }
 func ReadMonitorDir() []string {
 	// @title ReadMonitorDir
@@ -42,9 +53,9 @@ func ReadMonitorDir() []string {
 	// return []string  : return dir list in config.yml
 
 	//config settings
-	// viper.SetConfigName("config")
+	viper.SetConfigName("config")
 	// viper.AddConfigPath("./config")
-	viper.AddConfigPath(configPath)
+	viper.AddConfigPath(ConfigPath)
 	viper.AutomaticEnv()
 
 	//
@@ -62,9 +73,9 @@ func ReadRedisConfig(key string) string {
 	// return
 
 	//config settings
-	// viper.SetConfigName("config")
+	viper.SetConfigName("config")
 	// viper.AddConfigPath("./config")
-	viper.AddConfigPath(configPath)
+	viper.AddConfigPath(ConfigPath)
 	viper.AutomaticEnv()
 
 	//
@@ -82,9 +93,9 @@ func ReadSqlConfig(key string) string {
 	// return
 
 	//config settings
-	// viper.SetConfigName("config")
+	viper.SetConfigName("config")
 	// viper.AddConfigPath("./config")
-	viper.AddConfigPath(configPath)
+	viper.AddConfigPath(ConfigPath)
 	viper.AutomaticEnv()
 
 	//
@@ -102,9 +113,9 @@ func ReadSettingsConfig(key string) string {
 	// return
 
 	//config settings
-	// viper.SetConfigName("config")
+	viper.SetConfigName("config")
 	// viper.AddConfigPath("./config")
-	viper.AddConfigPath(configPath)
+	viper.AddConfigPath(ConfigPath)
 	viper.AutomaticEnv()
 
 	//
@@ -115,4 +126,31 @@ func ReadSettingsConfig(key string) string {
 	// fmt.Println(viper.GetString(fmt.Sprintf("database.%s", key)))
 	return viper.GetString(fmt.Sprintf("monitor.settings.%s", key))
 
+}
+
+func SetSettingsConfig(key string, value string) string {
+	// @title SetSettingsConfig
+	// @param
+	// return
+	viper.SetConfigName("config")
+	viper.Set("monitor.settings.%s", key)
+	err := viper.WriteConfig()
+	if err != nil {
+		panic(err)
+	}
+	return viper.GetString(fmt.Sprintf("monitor.settings.%s", key))
+}
+
+func SetSqliteConfig(key, value string) string {
+	// @title SetSettingsConfig
+	// @param
+	// return
+	viper.SetConfigName("config")
+	configKey := fmt.Sprintf("sqlite.%s", key)
+	viper.Set(configKey, value)
+	err := viper.WriteConfig()
+	if err != nil {
+		panic(err)
+	}
+	return viper.GetString(fmt.Sprintf("sqlite.%s", key))
 }

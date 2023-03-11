@@ -4,6 +4,7 @@ package db
 import (
 	"database/sql"
 	"fmt"
+	"os"
 	"time"
 
 	"github.com/1dayluo/subnya/pkg/logutil"
@@ -24,6 +25,14 @@ type SubdomainInfos struct {
 	STATUS      int
 }
 
+func setDefault() {
+	if _, err := os.Stat(db_1); os.IsNotExist(err) {
+		homedir, _ := os.UserHomeDir()
+		dbPath := fmt.Sprintf("%v/.config/subnya/db/", homedir)
+		db_1 = readconf.SetSqliteConfig("db_1", dbPath+"monitor.db")
+		os.MkdirAll(dbPath, os.ModePerm)
+	}
+}
 func init() {
 	//@title InitSqlClient
 	//@param
@@ -31,6 +40,7 @@ func init() {
 	if err := logutil.Init(); err != nil {
 		logutil.Logf("Failed to initialize logger: %v", err)
 	}
+	setDefault()
 
 	var err error
 	db_conn, err = sql.Open("sqlite3", db_1)
