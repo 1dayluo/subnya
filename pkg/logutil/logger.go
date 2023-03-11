@@ -1,7 +1,7 @@
 /*
  * @Author: 1dayluo
  * @Date: 2023-03-02 20:50:18
- * @LastEditTime: 2023-03-10 19:32:06
+ * @LastEditTime: 2023-03-11 21:53:30
  */
 // logger.go
 package logutil
@@ -12,6 +12,11 @@ import (
 
 	"github.com/1dayluo/subnya/pkg/readconf"
 )
+
+func init() {
+
+	os.MkdirAll(readconf.ReadSettingsConfig("logdir"), os.ModePerm)
+}
 
 var (
 	DefaultLogger = log.New(os.Stderr, "", log.LstdFlags)
@@ -26,7 +31,7 @@ func Logf(format string, v ...interface{}) {
 
 func Init() error {
 	// savePath := readconf.ReadSettingsConfig("logfile") + time.Now().Format("2006-01-02") + ".log"
-	savePath := readconf.ReadSettingsConfig("logfile") + "monitor_run.log"
+	savePath := readconf.ReadSettingsConfig("logdir") + "monitor_run.log"
 	logger, err := NewFileLogger(savePath)
 	if err != nil {
 		return err
