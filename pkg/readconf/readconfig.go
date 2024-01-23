@@ -32,7 +32,8 @@ func init() {
 			fmt.Println("[*]error,can not download sample config path!")
 		}
 		defer response.Body.Close()
-		// Create file
+		// Create dir&file
+		os.MkdirAll(ConfigPath, os.ModePerm)
 		file, err := os.Create(ConfigPath + configFile)
 		if err != nil {
 			fmt.Println("[ERR]read config file failed!", err)
