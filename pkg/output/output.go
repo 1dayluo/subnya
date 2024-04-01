@@ -23,7 +23,7 @@ type ResultOutput struct {
 	Code  map[string]int
 }
 
-var OutFile = readconf.ReadSettingsConfig("outfile") + "/" + time.Now().Format("2006-01-02")
+var OutFile = readconf.ReadSettingsConfig("outdir") + "/" + time.Now().Format("2006-01-02")
 
 const (
 	logo = `
@@ -36,7 +36,7 @@ const (
                                                                                                                        
                                                                                                                        
 
-					Subdomain Monitoring
+					Subdomain Monitoring v1.0.1(2024-4-1)
 	  		A tool for monitoring subdomain changes on target domain
 			  	Author: @1dayluo(https://github.com/1dayluo)
 	        ------------------------------------------------------
