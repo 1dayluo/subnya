@@ -13,9 +13,8 @@ import (
 
 	"github.com/spf13/viper"
 )
-
-homedir, _ := os.UserHomeDir()
-ConfigPath = fmt.Sprintf("%v/.config/subnya/", homedir)
+var homedir, _  = os.UserHomeDir()
+var ConfigPath = fmt.Sprintf("%v/.config/subnya/", homedir)
 var downloadSamplePath = "https://raw.githubusercontent.com/1dayluo/subnya/master/config/config.yml"
 
 func init() {
@@ -23,6 +22,8 @@ func init() {
 	 * @description: Update the subdomain under the domain and check its response code
 	 * @return {*}
 	 */
+
+
 	configFile := "config.yml"
 	if _, err := os.Stat(ConfigPath); os.IsNotExist(err) {
 		// get response from github
