@@ -3,13 +3,13 @@ schedule:
 
 monitor:
   dir: 
-    - "./test"
+    - "~/.config/subnya/test"
   settings:
     timeout : 30
     threads : 10
     maxenumerationtime: 10
-    outdir : "./output"
-    logdir: "./log/"
+    outdir : "~/.config/subnya/output"
+    logdir: "~/.config/subnya/log/"
   
   
 redis:
@@ -18,4 +18,4 @@ redis:
   db:   0 
 
 sqlite:
-  db_1: "./db/monitor.db"
+  db_1: "~/.config/subnya/db/monitor.db"
