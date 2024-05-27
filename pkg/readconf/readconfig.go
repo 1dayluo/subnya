@@ -11,6 +11,8 @@ import (
 	"net/http"
 	"os"
 
+	"path/filepath"
+
 	"github.com/spf13/viper"
 )
 
@@ -63,8 +65,18 @@ func ReadMonitorDir() []string {
 	if err := viper.ReadInConfig(); err != nil {
 		fmt.Println("read config file failed:", err)
 	}
+
+	monitorPath := viper.GetStringSlice("monitor.dir")
+	for index, dir := range monitorPath {
+		check := filepath.IsAbs(dir)
+		if !check {
+			monitorPath[index] = ConfigPath + monitorPath[index][1:]
+
+		}
+	}
+
 	// fmt.Println(viper.GetStringSlice("monitor.dir"))
-	return viper.GetStringSlice("monitor.dir")
+	return monitorPath
 
 }
 
