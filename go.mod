@@ -1,7 +1,7 @@
 module github.com/1dayluo/subnya
 
 go 1.20
-
+retract [v1.0.1, v1.0.2]
 require (
 	github.com/alexflint/go-arg v1.5.0
 	github.com/fatih/color v1.14.1
