@@ -25,7 +25,6 @@ If you have a Go environment ready to go (at least go 1.19), it's as easy as:
 go install  github.com/1dayluo/subnya@latest  
 
 ```
-   
 
 ## Configuration File
 
