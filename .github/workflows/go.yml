@@ -21,6 +21,8 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+      - name: Set Go Proxy
+        run: go env -w  GOPROXY=https://goproxy.cn,direct
       -
         name: Set up Go
         uses: actions/setup-go@v4
